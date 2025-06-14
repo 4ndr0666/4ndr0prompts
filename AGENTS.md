@@ -1,28 +1,55 @@
-# AGENTS.md — Red-Team Prompt Mutation Toolkit
+# AGENTS.md — 4ndr0prompts
 # Repository Root: <repo>/        (branch: main)
 #
 # Purpose
 # ───────
-# This repository houses the *Red-Team Prompt Mutation Toolkit* — a Python-centric
+# This repository houses the Red-Team Prompt Mutation Toolkit called 4ndr0prompts — a Python-centric
 # library plus CLI/TUI front-ends for generating adversarial prompts that probe
-# NSFW filter boundaries.  It is distinct from any cinematic/Sora prompt libs.
+# NSFW filter boundaries.  
 #
 # Directory Summary
-# ─────────────────
-# .
-# ├── category1…category6/    # slot-lists & category templates (Python)
-# ├── promptlib_redteam.py    # ★ unified core generator  ← primary import
-# ├── promptlib_cli.py        # prompt-toolkit interface  (console-script: promptlib-rt)
-# ├── promptlib_tui.py        # npyscreen TUI             (console-script: promptlib-rt-tui)
-# ├── promptlib.py            # Cinematic library (independent; do not mutate)
-# ├── promptlib_redteam/plugins/   # YAML / MD plug-ins (Prompts1 corpus lives here)
-# ├── scripts/                # helper utilities (import_prompts1.py, gen_catalogue.py)
-# ├── var/                    # runtime artefacts — logs & generated batches  ➜ git-ignored
-# ├── tests/                  # pytest suite (≥ 85 % coverage target)
-# ├── docs/                   # slot-catalogue & developer docs
-# ├── codex-merge-clean.sh    # merge-artifact scrubber (must run pre-commit)
-# ├── pre-commit              # hook invoking shellcheck, shfmt, ruff, pytest
-# └── pyproject.toml          # PEP 621 build metadata  (editable install)
+# ──────────────────
+# ├── 0-tests
+# │   └── codex-merge-clean.sh  # merge-artifact scrubber (must run pre-commit)
+# ├── AGENTS.md                 # General initialization directives.
+# ├── category1                 # slot-lists & category templates (Python)
+# │   ├── cat_template.py
+# │   └── slotlist.py
+# ├── category2
+# │   ├── cat_template2.py
+# │   └── slotlist2.py
+# ├── category3
+# │   ├── cat_template3.py
+# │   └── slotlist3.py
+# ├── category4
+# │   ├── cat_template4.py
+# │   └── slotlist4.py
+# ├── category5
+# │   ├── cat_template5.py
+# │   └── slotlist5.py
+# ├── category6
+# ├── CODEX.md                    # Project specific instructions
+# ├── cursetest.py                # Python tui test
+# ├── dataset                     # Main dataset for nsfw adversarial prompts
+# │   └── nsfwprompts.txt
+# ├── promptlib2.py               # Incomplete library aggregated from nsfwprompts.txt
+# ├── promptlib_cli.py            # Unknown. Asses need.
+# ├── promptlib_config.json       # Sample config file
+# ├── promptlib_interactive.py    # Python wrapper with fallback tui
+# ├── promptlib.py                # Cinematic library (independent; do not mutate)
+# ├── promptlib.sh                # Shell wrapper 
+# └── promptlib_tui.py            # Python wrapper npyscreen tui
+#
+# General Best Practices
+# ──────────────────
+# - Eliminate the potential for error by removing the human aspect; ensure the tasks you need done are handled via one-liners, functions or scripts and not by manual human input. 
+# - Never use placeholders, half-measures, or omitted code lines. Provide all functional logic end-to-end.
+# - Prioritize local scoping, strict error handling, and complete path resolution.
+# - Always lint using ShellCheck where applicable. Adhere to XDG Base Directory Specification for file paths.
+# - Automation must minimize user intervention while safeguarding system integrity.
+# - All files must be cleaned of CODEX merge artifacts before any commit or pull request merge.
+# - Use the utility: `0-tests/codex-merge-clean.sh <file ...>` to ensure no `<<<<<<<<<<<<<<<<<<<CODEX_`, `=========================`, or `>>>>>>>>>>>>>>>>>Main` blocks remain.
+# - Run this tool after CODEX-assisted merges, and before lint, test, or commit stages.
 #
 # Canonical Workflow
 # ──────────────────
@@ -35,12 +62,34 @@
 #
 # Coding & Lint Standards
 # ───────────────────────
+# To ensure long-term maintainability, clarity, and correctness, all contributions and AI-assisted edits must ensure compliance with the following:
+# - Use `printf` over `echo`, support non-interactive and piped use.
+# - For scripts that modify system state, enforce `sudo` validation and log actions to `$XDG_DATA_HOME/logs/`.
+# - All newly generated scripts must live in the appropriate category folder and be prefixed clearly (e.g., `ffx-*`, `exo-*`, `git-*`).
+# - Avoid `&>` redirection. Use `>file 2>&1` consistently.
+# - Validate all exports.
+# - Avoid unbound or arbitrary variables—concretely assign all values.
 # * Python 3.10+, PEP 8 via **ruff** auto-fix + **black** (88 cols).
 # * Shell scripts: POSIX-sh, `set -euo pipefail`, pass **shellcheck** & **shfmt**.
 # * Always implement `--help` & `--dry-run` in scripts affecting filesystem.
 # * Log-files under `$XDG_DATA_HOME/redteam/logs/` or `var/prompt_logs/`.
 # * No placeholders / truncated logic (see CODEX.md for merge policy).
 # * Execute `codex-merge-clean.sh` on every changed file pre-commit.
+#
+# Validation Requirements
+# ───────────────────────
+# Ensure all functions explicitly check:
+# - Return status of critical commands
+# - Input/output validations
+# - File existence and permission conditions
+#
+# Ensure all functions are:
+# - **Well-defined and fully implemented**
+# - **Idempotent** and **accessible**
+# - **Logically isolated** with explicit error capture
+# - **Variable declarations separate from assignments**
+# - **Free from ambiguity, newlines, extraneous input, or bad splitting**
+# - **Free of cyclomatic complexity**, using clear flow constructs
 #
 # XDG Compliance
 # ──────────────
@@ -54,7 +103,19 @@
 # 2. 50 random prompts per category contain no placeholders.
 # 3. CLI `--dry-run` returns 0.
 # 4. Plugin loader picks up new YAML on runtime.
-# 5. Prompts1 corpus lines are reachable (sample subset).
+# 5. Prompts1 corpus lines are reachable (full subset).
+# 6. Use `bats` or inline test harnesses where feasible.
+# 7. Mock destructive commands in dry-run mode.
+# 8. Ensure to execute the following pre-commit hook before a PR:
+#
+# ```bash
+# #!/usr/bin/env bash
+# set -e
+# for f in $(git diff --cached --name-only); do
+#     [ -f "$f" ] && 0-tests/codex-merge-clean.sh "$f"
+# done
+# git add .
+# ```
 #
 # Merge & Review Protocol
 # ───────────────────────
@@ -76,17 +137,6 @@
 # • Never bypass lint, dry-run, or coverage thresholds without written exception.
 #
 # End of AGENTS.md
-
-
-
-
-
-
-
-
-
-
-
 
 
 
