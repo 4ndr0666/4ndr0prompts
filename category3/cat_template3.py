@@ -1,0 +1,1 @@
+"[PERSON] opens their mouth to [MOUTH_ACTION] a [OBJECT], with [LIQUID_DESC] present. [EYE_CONTACT], [FACE_EXPRESSION], and [POSE] are maintained. [ATTIRE_STATUS]. [CAMERA_FRAMING] and [CAMERA_STATIC] persist as [SENSORY_BEHAVIORAL] occurs."
