@@ -40,7 +40,7 @@ def cprint(text, style_name="output"):
 
 
 # -------------------- Runtime Directories --------------------
-RUNTIME_DIR = Path(__file__).resolve().parent.parent / "var"
+RUNTIME_DIR = Path(__file__).resolve().parent.parent / "prompts"
 LOG_DIR = RUNTIME_DIR / "prompt_logs"
 OUTPUT_DIR = RUNTIME_DIR / "prompts_out"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
@@ -926,3 +926,6 @@ if __name__ == "__main__":
         interactive_main()
     else:
         cli_main()
+
+
+
