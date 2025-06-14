@@ -15,7 +15,6 @@ import json
 import random
 import datetime
 import argparse
-from pathlib import Path
 
 from prompt_toolkit.shortcuts import radiolist_dialog
 from prompt_toolkit.styles import Style
@@ -37,14 +36,6 @@ style = Style.from_dict(
 
 def cprint(text, style_name="output"):
     print_formatted_text(HTML(f"<{style_name}>{text}</{style_name}>"), style=style)
-
-
-# -------------------- Runtime Directories --------------------
-RUNTIME_DIR = Path(__file__).resolve().parent.parent / "prompts"
-LOG_DIR = RUNTIME_DIR / "prompt_logs"
-OUTPUT_DIR = RUNTIME_DIR / "prompts_out"
-LOG_DIR.mkdir(parents=True, exist_ok=True)
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ===================== TEMPLATES and SLOTS ============================
@@ -811,18 +802,16 @@ def format_structured_output(prompts, slotset, output_path):
             f.write(f"{row} | {p}\n")
 
 
-def log_prompts(prompts, category, slotset, output_path=None, log_dir=LOG_DIR):
+def log_prompts(prompts, category, slotset, output_path=None, log_dir="prompt_logs"):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     if not output_path:
-        output_path = OUTPUT_DIR / f"prompts_{category}_{timestamp}.txt"
-    else:
-        output_path = Path(output_path)
-    format_structured_output(prompts, slotset, str(output_path))
+        output_path = f"prompts_{category}_{timestamp}.txt"
+    format_structured_output(prompts, slotset, output_path)
     os.makedirs(log_dir, exist_ok=True)
-    with open(log_dir / "prompt_audit.log", "a") as log:
+    with open(os.path.join(log_dir, "prompt_audit.log"), "a") as log:
         for p in prompts:
             log.write(f"{timestamp}\t{category}\t{p}\n")
-    return str(output_path)
+    return output_path
 
 
 # ===================== Interactive CLI with prompt_toolkit ==============
@@ -926,14 +915,3 @@ if __name__ == "__main__":
         interactive_main()
     else:
         cli_main()
-
-
-
-
-
-
-
-
-
-
-
