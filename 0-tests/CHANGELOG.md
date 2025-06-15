@@ -3,8 +3,7 @@
 - add pre-commit config running ruff, black, pytest, and codex-merge-clean
 - document workflow in README
 - integrate shellcheck into pre-commit hooks and expand README instructions
-- promptlib.py exposes --list-categories and promptlib.sh drops eval usage
-
+- add mapping table in promptlib2 and new tests
 
 
 

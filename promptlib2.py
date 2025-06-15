@@ -19,6 +19,18 @@ from typing import Iterable, List
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "dataset", "nsfwprompts.txt")
 DEFAULT_CATEGORY = "other_uncategorized"
 
+# Mapping from dataset slugs to template keys.
+# Keep this in sync with ``dataset/templates.json`` to ensure category names
+# remain stable across libraries.
+CATEGORY_MAP = {
+    "mention_of_removing_cloths_garments_dress_and_revealing_chest": "clothing_chest_exposure",
+    "mentions_of_turning_around_revealing_butt": "turning_bending_buttocks",
+    "mention_of_inserting_an_object_or_anything_into_mouth": "insertion_oral_mouth",
+    "mention_of_multiple_people": "multi_person_interaction",
+    "if_not_in_any_categories_above_yet_mention_of_white_fluid_liquid": "white_fluid_dripping",
+    "everything_else_left_over": "other_uncategorized",
+}
+
 
 @dataclass
 class PromptEntry:
@@ -54,7 +66,8 @@ def parse_dataset(path: str = DATASET_PATH) -> List[tuple[int, str, str]]:
                 break
             m = re.match(r"###\s*Category\s*\d+:(.*)", stripped)
             if m:
-                current_category = _slugify(m.group(1)) or DEFAULT_CATEGORY
+                slug = _slugify(m.group(1))
+                current_category = CATEGORY_MAP.get(slug, slug) or DEFAULT_CATEGORY
                 continue
             cleaned = _clean_line(stripped)
             if cleaned:
@@ -136,3 +149,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

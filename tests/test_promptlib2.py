@@ -36,3 +36,11 @@ def test_default_log_dir(monkeypatch, tmp_path):
     importlib.reload(promptlib)
     expected = os.path.join(tmp_path, "redteam-prompts", "logs")
     assert promptlib.DEFAULT_LOG_DIR == expected
+
+
+def test_category_mapping_applied():
+    prompts = promptlib2.load_prompts()
+    categories = {p.category for p in prompts}
+    # mapping should translate dataset categories to template keys
+    assert "clothing_chest_exposure" in categories
+
