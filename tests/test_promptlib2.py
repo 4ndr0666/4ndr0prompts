@@ -1,5 +1,6 @@
 import subprocess
 import sys
+import os
 
 import promptlib2
 
@@ -25,3 +26,13 @@ def test_cli_dry_run():
     )
     assert result.returncode == 0
     assert result.stdout.strip()
+
+
+def test_default_log_dir(monkeypatch, tmp_path):
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+    import importlib
+
+    promptlib = importlib.import_module("promptlib")
+    importlib.reload(promptlib)
+    expected = os.path.join(tmp_path, "redteam-prompts", "logs")
+    assert promptlib.DEFAULT_LOG_DIR == expected
