@@ -25,5 +25,3 @@ Run all checks manually with:
 ```bash
 pre-commit run --all-files
 ```
-
-
