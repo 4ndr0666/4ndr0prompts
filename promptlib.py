@@ -20,6 +20,12 @@ import datetime
 import json
 from prompt_config import load_config
 
+DEFAULT_LOG_DIR = os.path.join(
+    os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")),
+    "redteam-prompts",
+    "logs",
+)
+
 # ANSI color support for cyan highlights
 CYAN = "\033[36m"
 RESET = "\033[0m"
@@ -115,7 +121,7 @@ def save_structured(prompts, category, slotsets, output_path):
                 f.write(f"  {slot}: {value}\n")
 
 
-def log_prompts(prompts, category, slotsets, output_path=None, log_dir="prompt_logs"):
+def log_prompts(prompts, category, slotsets, output_path=None, log_dir=DEFAULT_LOG_DIR):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     if not output_path:
         output_path = f"prompts_{category}_{timestamp}.txt"

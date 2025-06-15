@@ -19,6 +19,12 @@ from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
 from prompt_config import generate_prompt, load_config
 
+DEFAULT_LOG_DIR = os.path.join(
+    os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")),
+    "redteam-prompts",
+    "logs",
+)
+
 # ---- Defensive promptlib import ----
 try:
     import promptlib
@@ -58,7 +64,7 @@ def write_previewed_prompts(category, prompts, output_path):
         for idx, p in enumerate(prompts, 1):
             f.write(f"{idx}. {p}\n\n")
     # Also audit
-    audit_dir = "prompt_logs"
+    audit_dir = DEFAULT_LOG_DIR
     safe_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     os.makedirs(audit_dir, exist_ok=True)
     with open(os.path.join(audit_dir, "prompt_audit.log"), "a") as log:
@@ -160,7 +166,9 @@ def main():
     # Final message
     message_dialog(
         title="PromptLib CLI Done",
-        text="Prompt generation complete.\nAudit: prompt_logs/prompt_audit.log",
+        text=(
+            "Prompt generation complete.\nAudit: " f"{DEFAULT_LOG_DIR}/prompt_audit.log"
+        ),
         style=style,
     ).run()
 
@@ -171,4 +179,3 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nAborted.")
         sys.exit(0)
-
