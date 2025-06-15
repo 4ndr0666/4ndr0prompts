@@ -152,11 +152,22 @@ def random_prompt(template, slotset):
     return result, selected
 
 
+def generate_prompt(template, slotset):
+    """Return a prompt with slots filled randomly."""
+    prompt, _ = random_prompt(template, slotset)
+    return prompt
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Red Team Prompt Mutation Engine (promptlib.py)"
     )
     parser.add_argument("--tui", action="store_true", help="Run interactive TUI mode")
+    parser.add_argument(
+        "--list-categories",
+        action="store_true",
+        help="List available prompt categories and exit",
+    )
     parser.add_argument(
         "--category",
         type=str,
@@ -173,6 +184,11 @@ def main():
     args = parser.parse_args()
 
     color = not args.no_color
+
+    if args.list_categories:
+        for cat in sorted(TEMPLATES.keys()):
+            print(cat)
+        sys.exit(0)
 
     if args.tui:
         interactive_prompt(enable_color=color)
