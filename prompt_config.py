@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import os
+import random
 from typing import Dict
 
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "dataset", "templates.json")
@@ -24,3 +25,20 @@ def load_config(
         _templates = data.get("templates", {})
         _slots = data.get("slots", {})
     return _templates, _slots
+
+
+def generate_prompt(template: str, slots: Dict[str, list]) -> str:
+    """Return a prompt with placeholders replaced by random slot values."""
+    result = template
+    max_iterations = 10
+    for _ in range(max_iterations):
+        changed = False
+        for slot, choices in slots.items():
+            placeholder = f"[{slot}]"
+            if placeholder in result:
+                result = result.replace(placeholder, random.choice(choices), 1)
+                changed = True
+        if not changed:
+            break
+    return result
+
