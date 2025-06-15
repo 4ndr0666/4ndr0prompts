@@ -151,7 +151,12 @@ def main():
         description="Red Team Prompt Mutation Engine (promptlib.py)"
     )
     parser.add_argument("--tui", action="store_true", help="Run interactive TUI mode")
-    parser.add_argument("--category", type=str, help="Category key for batch mode")
+    parser.add_argument(
+        "--category",
+        type=str,
+        choices=list(TEMPLATES.keys()),
+        help="Category key for batch mode",
+    )
     parser.add_argument(
         "--count", type=int, default=5, help="Number of prompts (batch mode)"
     )

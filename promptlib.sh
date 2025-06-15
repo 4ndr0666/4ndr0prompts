@@ -23,7 +23,11 @@ usage() {
     echo "  --tui                    Run interactive TUI mode"
     echo
     echo "Available categories:"
-    $PYTHON_BIN $SCRIPT_NAME --help | grep "choices=" | sed 's/.*choices=//' | tr -d '[],' | tr "'" "\n" | awk '{$1=$1};1' | grep -v "^$" | sort | uniq
+    $PYTHON_BIN - <<'EOF'
+from prompt_config import load_config
+for name in sorted(load_config()[0].keys()):
+    print(name)
+EOF
 }
 
 # -----------
@@ -108,4 +112,5 @@ if [[ $STATUS -eq 0 ]]; then
 else
     echo "[ERROR] Prompt generation failed (exit code $STATUS)"
 fi
+
 

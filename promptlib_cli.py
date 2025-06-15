@@ -17,6 +17,7 @@ from prompt_toolkit.shortcuts import (
 )
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
+from prompt_config import generate_prompt, load_config
 
 # ---- Defensive promptlib import ----
 try:
@@ -131,12 +132,10 @@ def main():
     # For each category: preview and save
     for idx, cat in enumerate(selected):
         try:
-            templates, slots = promptlib.load_config(config_path)
+            templates, slots = load_config(config_path)
             template = templates[cat]
             slotset = slots[cat]
-            prompts = [
-                promptlib.generate_prompt(template, slotset) for _ in range(count)
-            ]
+            prompts = [generate_prompt(template, slotset) for _ in range(count)]
         except Exception as e:
             message_dialog(
                 title="ERROR", text=f"Failed to generate for {cat}:\n{e}", style=style
@@ -172,3 +171,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nAborted.")
         sys.exit(0)
+

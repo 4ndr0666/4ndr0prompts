@@ -68,5 +68,3 @@ templates, slots = load_config()
 print(list(templates))  # available categories
 print(slots["clothing_chest_exposure"]["PERSON"][:3])
 ```
-
-

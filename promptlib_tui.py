@@ -15,6 +15,7 @@ if not sys.stdin.isatty() or not sys.stdout.isatty():
 
 import npyscreen
 import datetime
+from prompt_config import generate_prompt, load_config
 
 # ==== Defensive Import and Category Check ====
 try:
@@ -184,11 +185,11 @@ class PromptPreviewForm(npyscreen.ActionForm):
         )
         # Generate prompts for preview
         try:
-            templates, slots = promptlib.load_config(self.parentApp.config_path)
+            templates, slots = load_config(self.parentApp.config_path)
             template = templates[self.cur_category]
             slotset = slots[self.cur_category]
             self.prompts = [
-                promptlib.generate_prompt(template, slotset)
+                generate_prompt(template, slotset)
                 for _ in range(self.parentApp.prompt_count)
             ]
         except Exception as e:
@@ -272,13 +273,10 @@ def safe_cli_menu():
     i = int(input("Enter number: ")) - 1
     n = int(input("Prompt count: "))
     for _ in range(n):
-        print(
-            promptlib.generate_prompt(
-                promptlib.TEMPLATES[cats[i]], promptlib.SLOTS[cats[i]]
-            )
-        )
+        print(generate_prompt(promptlib.TEMPLATES[cats[i]], promptlib.SLOTS[cats[i]]))
 
 
 if __name__ == "__main__":
     safe_cli_menu()
     PromptGenApp().run()
+

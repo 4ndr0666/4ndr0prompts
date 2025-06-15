@@ -5,44 +5,35 @@
 # ───────
 # This repository houses the Red-Team Prompt Mutation Toolkit called 4ndr0prompts — a Python-centric
 # library plus CLI/TUI front-ends for generating adversarial prompts that probe
-# NSFW filter boundaries.  
+# NSFW filter boundaries.
 #
 # Directory Summary
 # ──────────────────
 # ├── 0-tests
 # │   └── codex-merge-clean.sh  # merge-artifact scrubber (must run pre-commit)
 # ├── AGENTS.md                 # General initialization directives.
-# ├── category1                 # slot-lists & category templates (Python)
-# │   ├── cat_template.py
-# │   └── slotlist.py
-# ├── category2
-# │   ├── cat_template2.py
-# │   └── slotlist2.py
-# ├── category3
-# │   ├── cat_template3.py
-# │   └── slotlist3.py
-# ├── category4
-# │   ├── cat_template4.py
-# │   └── slotlist4.py
-# ├── category5
-# │   ├── cat_template5.py
-# │   └── slotlist5.py
-# ├── category6
-# ├── CODEX.md                    # Project specific instructions
-# ├── cursetest.py                # Python tui test
-# ├── dataset                     # Main dataset for nsfw adversarial prompts
-# │   └── nsfwprompts.txt
-# ├── promptlib2.py               # Incomplete library aggregated from nsfwprompts.txt
-# ├── promptlib_cli.py            # Unknown. Asses need.
-# ├── promptlib_config.json       # Sample config file
-# ├── promptlib_interactive.py    # Python wrapper with fallback tui
+# ├── dataset                     # Prompt corpus and JSON config
+# │   ├── nsfwprompts.txt
+# │   └── templates.json          # templates & slots for prompt generation
+# ├── prompt_config.py           # Shared loader for templates.json
 # ├── promptlib.py                # Cinematic library (independent; do not mutate)
-# ├── promptlib.sh                # Shell wrapper 
-# └── promptlib_tui.py            # Python wrapper npyscreen tui
+# ├── promptlib2.py               # Dataset-based prompt retrieval library
+# ├── promptlib_cli.py            # CLI interface for promptlib
+# ├── promptlib_interactive.py    # Python wrapper with fallback TUI
+# ├── promptlib.sh                # Shell wrapper
+# ├── promptlib_tui.py            # npyscreen TUI wrapper
+# ├── tests                       # pytest unit tests
+# └── README.md                   # Project overview and workflow
+#
+# Configuration Files
+# ───────────────────
+# All templates and slot lists now reside in `dataset/templates.json`.
+# The `prompt_config.py` module loads this JSON and caches it for use by
+# `promptlib.py`, `promptlib2.py`, and related front-ends.
 #
 # General Best Practices
 # ──────────────────
-# - Eliminate the potential for error by removing the human aspect; ensure the tasks you need done are handled via one-liners, functions or scripts and not by manual human input. 
+# - Eliminate the potential for error by removing the human aspect; ensure the tasks you need done are handled via one-liners, functions or scripts and not by manual human input.
 # - Never use placeholders, half-measures, or omitted code lines. Provide all functional logic end-to-end.
 # - Prioritize local scoping, strict error handling, and complete path resolution.
 # - Always lint using ShellCheck where applicable. Adhere to XDG Base Directory Specification for file paths.
@@ -56,7 +47,7 @@
 #   git checkout -b feature/<task>
 #   ./codex-merge-clean.sh $(git ls-files '*.sh' '*.py')
 #   ruff --fix . && black .
-#   pytest -q && pytest --cov=promptlib_redteam -q
+#   PYTHONPATH=. pytest -q
 #   git add -u && git commit -m "<type>: <message>"
 #   pre-commit run --all-files
 #
@@ -137,15 +128,3 @@
 # • Never bypass lint, dry-run, or coverage thresholds without written exception.
 #
 # End of AGENTS.md
-
-
-
-
-
-
-
-
-
-
-
-
