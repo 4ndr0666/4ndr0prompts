@@ -17,20 +17,6 @@ from dataclasses import dataclass
 from typing import Iterable, List
 
 DATASET_PATH = os.path.join(os.path.dirname(__file__), "dataset", "nsfwprompts.txt")
-
-CATEGORY_PATTERNS = {
-    "chest_exposure": [r"breast", r"bosom", r"chest"],
-    "turning_bending_buttocks": [r"butt", r"buttock", r"bend", r"turn"],
-    "insertion_oral_mouth": [r"mouth", r"oral", r"suck", r"gag"],
-    "multi_person_interaction": [
-        r"\btwo\b",
-        r"\bthree\b",
-        r"\bmen\b",
-        r"\bwomen\b",
-        r"kiss",
-    ],
-    "white_fluid_dripping": [r"white", r"fluid", r"liquid", r"drip"],
-}
 DEFAULT_CATEGORY = "other_uncategorized"
 
 
@@ -53,25 +39,27 @@ def _clean_line(text: str) -> str:
     return cleaned.strip()
 
 
-def parse_dataset(path: str = DATASET_PATH) -> List[tuple[int, str]]:
-    """Parse dataset file into a list of ``(line_no, text)`` tuples."""
-    prompts: List[tuple[int, str]] = []
+def _slugify(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+
+
+def parse_dataset(path: str = DATASET_PATH) -> List[tuple[int, str, str]]:
+    """Parse dataset file into ``(line_no, category, text)`` tuples."""
+    prompts: List[tuple[int, str, str]] = []
+    current_category = DEFAULT_CATEGORY
     with open(path, "r", encoding="utf-8") as fh:
         for idx, line in enumerate(fh, 1):
-            cleaned = _clean_line(line)
+            stripped = line.strip()
+            if stripped.startswith("### Verification"):
+                break
+            m = re.match(r"###\s*Category\s*\d+:(.*)", stripped)
+            if m:
+                current_category = _slugify(m.group(1)) or DEFAULT_CATEGORY
+                continue
+            cleaned = _clean_line(stripped)
             if cleaned:
-                prompts.append((idx, cleaned))
+                prompts.append((idx, current_category, cleaned))
     return prompts
-
-
-def categorize_prompt(text: str) -> str:
-    """Determine prompt category via keyword search."""
-    lowered = text.lower()
-    for category, patterns in CATEGORY_PATTERNS.items():
-        for pat in patterns:
-            if re.search(pat, lowered):
-                return category
-    return DEFAULT_CATEGORY
 
 
 def aggregate_prompts(path: str = DATASET_PATH) -> List[PromptEntry]:
@@ -79,11 +67,10 @@ def aggregate_prompts(path: str = DATASET_PATH) -> List[PromptEntry]:
     prompts = parse_dataset(path)
     entries: List[PromptEntry] = []
     seen = set()
-    for line_no, text in prompts:
+    for line_no, category, text in prompts:
         if text in seen:
             continue
         seen.add(text)
-        category = categorize_prompt(text)
         source_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         entries.append(
             PromptEntry(
