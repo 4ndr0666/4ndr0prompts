@@ -15,11 +15,16 @@ import json
 import random
 import datetime
 import argparse
-
 from prompt_toolkit.shortcuts import radiolist_dialog
 from prompt_toolkit.styles import Style
 from prompt_toolkit import print_formatted_text, HTML
 from prompt_config import load_config
+
+DEFAULT_LOG_DIR = os.path.join(
+    os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")),
+    "redteam-prompts",
+    "logs",
+)
 
 # ===================== Style for cyan highlights ======================
 style = Style.from_dict(
@@ -100,7 +105,7 @@ def format_structured_output(prompts, slotset, output_path):
             f.write(f"{row} | {p}\n")
 
 
-def log_prompts(prompts, category, slotset, output_path=None, log_dir="prompt_logs"):
+def log_prompts(prompts, category, slotset, output_path=None, log_dir=DEFAULT_LOG_DIR):
     timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     if not output_path:
         output_path = f"prompts_{category}_{timestamp}.txt"
