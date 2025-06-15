@@ -108,3 +108,4 @@ if [[ $STATUS -eq 0 ]]; then
 else
     echo "[ERROR] Prompt generation failed (exit code $STATUS)"
 fi
+
