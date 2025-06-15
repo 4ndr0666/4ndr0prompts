@@ -1,4 +1,12 @@
 repos:
+  - repo: local
+    hooks:
+      - id: codex-merge-clean
+        name: codex-merge-clean
+        entry: bash 0-tests/codex-merge-clean.sh
+        language: script
+        pass_filenames: true
+        files: ''
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.1.1
     hooks:
@@ -8,18 +16,18 @@ repos:
     rev: 23.12.1
     hooks:
       - id: black
+  - repo: https://github.com/koalaman/shellcheck
+    rev: v0.9.0
+    hooks:
+      - id: shellcheck
+        files: '\.(sh)$'
   - repo: local
     hooks:
-      - id: codex-merge-clean
-        name: codex-merge-clean
-        entry: bash 0-tests/codex-merge-clean.sh
-        language: script
-        pass_filenames: true
-        files: ''
       - id: pytest
         name: pytest
         entry: bash -c 'PYTHONPATH=. pytest -q'
         language: system
         types: [python]
+
 
 

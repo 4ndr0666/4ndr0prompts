@@ -7,12 +7,14 @@ This repository contains utilities for generating and testing red-team prompt mu
 1. Install the development dependencies:
    ```bash
    pip install -r requirements.txt  # if available
-   pip install pre-commit
+   pip install pre-commit ruff black pytest shellcheck
    ```
 2. Install the pre-commit hooks:
    ```bash
    pre-commit install
    ```
+3. The hooks run `0-tests/codex-merge-clean.sh` first and then execute
+   **ruff**, **black**, **shellcheck**, and **pytest** on changed files.
 
 ## Development Workflow
 
@@ -25,3 +27,4 @@ Run all checks manually with:
 ```bash
 pre-commit run --all-files
 ```
+
