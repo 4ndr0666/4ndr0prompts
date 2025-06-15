@@ -152,6 +152,12 @@ def random_prompt(template, slotset):
     return result, selected
 
 
+def generate_prompt(template, slotset):
+    """Return a prompt with slots filled randomly."""
+    prompt, _ = random_prompt(template, slotset)
+    return prompt
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Red Team Prompt Mutation Engine (promptlib.py)"
