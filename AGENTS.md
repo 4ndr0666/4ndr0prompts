@@ -30,6 +30,7 @@
 # All templates and slot lists now reside in `dataset/templates.json`.
 # The `prompt_config.py` module loads this JSON and caches it for use by
 # `promptlib.py`, `promptlib2.py`, and related front-ends.
+# This unified loader should be used whenever templates or slots are required.
 #
 # General Best Practices
 # ──────────────────
@@ -56,7 +57,7 @@
 # To ensure long-term maintainability, clarity, and correctness, all contributions and AI-assisted edits must ensure compliance with the following:
 # - Use `printf` over `echo`, support non-interactive and piped use.
 # - For scripts that modify system state, enforce `sudo` validation and log actions to `$XDG_DATA_HOME/logs/`.
-# - All newly generated scripts must live in the appropriate category folder and be prefixed clearly (e.g., `ffx-*`, `exo-*`, `git-*`).
+# - Prefix new scripts clearly (e.g., `ffx-*`, `exo-*`, `git-*`).
 # - Avoid `&>` redirection. Use `>file 2>&1` consistently.
 # - Validate all exports.
 # - Avoid unbound or arbitrary variables—concretely assign all values.
@@ -94,7 +95,7 @@
 # 2. 50 random prompts per category contain no placeholders.
 # 3. CLI `--dry-run` returns 0.
 # 4. Plugin loader picks up new YAML on runtime.
-# 5. Prompts1 corpus lines are reachable (full subset).
+# 5. Prompts from `dataset/templates.json` load correctly via `prompt_config.load_config`.
 # 6. Use `bats` or inline test harnesses where feasible.
 # 7. Mock destructive commands in dry-run mode.
 # 8. Ensure to execute the following pre-commit hook before a PR:
@@ -128,3 +129,4 @@
 # • Never bypass lint, dry-run, or coverage thresholds without written exception.
 #
 # End of AGENTS.md
+
