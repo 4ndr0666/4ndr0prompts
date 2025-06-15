@@ -84,11 +84,11 @@ done
 # -----------
 
 if [[ "$TUI_MODE" -eq 1 ]]; then
-    CMD="$PYTHON_BIN $SCRIPT_NAME --tui"
+    CMD=("$PYTHON_BIN" "$SCRIPT_NAME" "--tui")
     if [[ "$NO_COLOR" -eq 1 ]]; then
-        CMD="$CMD --no-color"
+        CMD+=("--no-color")
     fi
-    eval $CMD
+    "${CMD[@]}"
     exit $?
 fi
 
@@ -98,15 +98,15 @@ if [[ -z "$CATEGORY" ]]; then
     exit 1
 fi
 
-CMD="$PYTHON_BIN $SCRIPT_NAME --category $CATEGORY --count $COUNT"
+CMD=("$PYTHON_BIN" "$SCRIPT_NAME" "--category" "$CATEGORY" "--count" "$COUNT")
 if [[ -n "$OUTPUT" ]]; then
-    CMD="$CMD --output \"$OUTPUT\""
+    CMD+=("--output" "$OUTPUT")
 fi
 if [[ "$NO_COLOR" -eq 1 ]]; then
-    CMD="$CMD --no-color"
+    CMD+=("--no-color")
 fi
 
-eval $CMD
+"${CMD[@]}"
 STATUS=$?
 if [[ $STATUS -eq 0 ]]; then
     printf '[SUCCESS] Prompts generated for category %s.\n' "$CATEGORY"
@@ -119,4 +119,6 @@ else
     printf '[ERROR] Prompt generation failed (exit code %s)\n' "$STATUS"
     printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
 fi
+
+
 
