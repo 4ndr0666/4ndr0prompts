@@ -1,5 +1,6 @@
 #!/bin/bash
 # promptlib.sh - Production-ready shell wrapper for promptlib.py
+set -euo pipefail
 
 # -----------
 # CONFIGURATION
@@ -7,22 +8,25 @@
 
 PYTHON_BIN="python3"
 SCRIPT_NAME="promptlib.py"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/redteam-prompts"
+LOG_FILE="$DATA_HOME/promptlib.log"
+mkdir -p "$DATA_HOME"
 
 # -----------
 # USAGE FUNCTION
 # -----------
 
 usage() {
-    echo "Usage: $0 --category <category> [--count N] [--output FILE] [--no-color]"
-    echo "       $0 --tui [--no-color]"
-    echo
-    echo "  --category <category>    Category key (batch mode, e.g. clothing_chest_exposure)"
-    echo "  --count N                Number of prompts to generate (default: 5)"
-    echo "  --output FILE            Output file for structured prompts"
-    echo "  --no-color               Disable cyan output highlighting"
-    echo "  --tui                    Run interactive TUI mode"
-    echo
-    echo "Available categories:"
+    printf 'Usage: %s --category <category> [--count N] [--output FILE] [--no-color]\n' "$0"
+    printf '       %s --tui [--no-color]\n' "$0"
+    printf '\n'
+    printf '  --category <category>    Category key (batch mode, e.g. clothing_chest_exposure)\n'
+    printf '  --count N                Number of prompts to generate (default: 5)\n'
+    printf '  --output FILE            Output file saved under %s\n' "$DATA_HOME"
+    printf '  --no-color               Disable cyan output highlighting\n'
+    printf '  --tui                    Run interactive TUI mode\n'
+    printf '\n'
+    printf 'Available categories:\n'
     $PYTHON_BIN - <<'EOF'
 from prompt_config import load_config
 for name in sorted(load_config()[0].keys()):
@@ -56,7 +60,7 @@ while [[ $# -gt 0 ]]; do
             shift; shift
             ;;
         --output)
-            OUTPUT="$2"
+            OUTPUT="$DATA_HOME/$(basename "$2")"
             shift; shift
             ;;
         --no-color)
@@ -68,7 +72,7 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         *)
-            echo "[ERROR] Unknown argument: $1"
+            printf '[ERROR] Unknown argument: %s\n' "$1"
             usage
             exit 1
             ;;
@@ -89,13 +93,13 @@ if [[ "$TUI_MODE" -eq 1 ]]; then
 fi
 
 if [[ -z "$CATEGORY" ]]; then
-    echo "[ERROR] --category is required unless running --tui"
+    printf '[ERROR] --category is required unless running --tui\n'
     usage
     exit 1
 fi
 
 CMD="$PYTHON_BIN $SCRIPT_NAME --category $CATEGORY --count $COUNT"
-if [[ ! -z "$OUTPUT" ]]; then
+if [[ -n "$OUTPUT" ]]; then
     CMD="$CMD --output \"$OUTPUT\""
 fi
 if [[ "$NO_COLOR" -eq 1 ]]; then
@@ -105,12 +109,14 @@ fi
 eval $CMD
 STATUS=$?
 if [[ $STATUS -eq 0 ]]; then
-    echo "[SUCCESS] Prompts generated for category '$CATEGORY'."
-    if [[ ! -z "$OUTPUT" ]]; then
-        echo "[INFO] See file: $OUTPUT"
+    printf '[SUCCESS] Prompts generated for category %s.\n' "$CATEGORY"
+    printf '%s [SUCCESS] category=%s\n' "$(date -Is)" "$CATEGORY" >>"$LOG_FILE"
+    if [[ -n "$OUTPUT" ]]; then
+        printf '[INFO] See file: %s\n' "$OUTPUT"
+        printf '%s [INFO] output=%s\n' "$(date -Is)" "$OUTPUT" >>"$LOG_FILE"
     fi
 else
-    echo "[ERROR] Prompt generation failed (exit code $STATUS)"
+    printf '[ERROR] Prompt generation failed (exit code %s)\n' "$STATUS"
+    printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
 fi
-
 
