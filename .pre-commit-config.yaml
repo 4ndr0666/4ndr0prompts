@@ -1,0 +1,25 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.1
+    hooks:
+      - id: ruff
+        args: [--fix]
+  - repo: https://github.com/psf/black
+    rev: 23.12.1
+    hooks:
+      - id: black
+  - repo: local
+    hooks:
+      - id: codex-merge-clean
+        name: codex-merge-clean
+        entry: bash 0-tests/codex-merge-clean.sh
+        language: script
+        pass_filenames: true
+        files: ''
+      - id: pytest
+        name: pytest
+        entry: bash -c 'PYTHONPATH=. pytest -q'
+        language: system
+        types: [python]
+
+
