@@ -6,7 +6,6 @@ This repository contains utilities for generating and testing red-team prompt mu
 
 1. Install the development dependencies:
    ```bash
-   pip install -r requirements.txt  # if available
    pip install pre-commit ruff black pytest shellcheck
    ```
 2. Install the pre-commit hooks:
@@ -27,3 +26,4 @@ Run all checks manually with:
 ```bash
 pre-commit run --all-files
 ```
+
