@@ -111,7 +111,7 @@ def interactive_prompt(enable_color=True):
 
 
 def save_structured(prompts, category, slotsets, output_path):
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         for idx, (prompt, slots) in enumerate(zip(prompts, slotsets), 1):
             f.write("---\n")
             f.write(f"prompt_{idx}:\n")
