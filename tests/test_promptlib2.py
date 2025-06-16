@@ -43,4 +43,3 @@ def test_category_mapping_applied():
     categories = {p.category for p in prompts}
     # mapping should translate dataset categories to template keys
     assert "clothing_chest_exposure" in categories
-

@@ -279,4 +279,3 @@ def safe_cli_menu():
 if __name__ == "__main__":
     safe_cli_menu()
     PromptGenApp().run()
-
