@@ -9,16 +9,11 @@ Run with ``--simple-cli`` for a minimal prompt generator when a full TUI is not 
 import sys
 import os
 import argparse
-
-# ---- TTY Safety Check ----
-if not sys.stdin.isatty() or not sys.stdout.isatty():
-    print("ERROR: promptlib_tui.py requires a real terminal (tty).")
-    print("Run this script in a terminal window, not via backgrounded script or pipe.")
-    sys.exit(1)
-
 import npyscreen
 import datetime
 from prompt_config import generate_prompt, load_config
+
+IS_TTY = sys.stdin.isatty() and sys.stdout.isatty()
 
 # ==== Defensive Import and Category Check ====
 try:
@@ -31,7 +26,6 @@ except ImportError:
             wide=True,
         )
     )
-    sys.exit(1)
     sys.exit(1)
 
 
@@ -80,7 +74,7 @@ def write_previewed_prompts(category, prompts, output_path):
         for idx, p in enumerate(prompts, 1):
             f.write(f"{idx}. {p}\n\n")
     # Also audit
-    audit_dir = "prompt_logs"
+    audit_dir = promptlib.DEFAULT_LOG_DIR
     safe_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     os.makedirs(audit_dir, exist_ok=True)
     with open(os.path.join(audit_dir, "prompt_audit.log"), "a") as log:
@@ -288,7 +282,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.simple_cli:
+    if args.simple_cli or not IS_TTY:
         safe_cli_menu()
     else:
         PromptGenApp().run()
