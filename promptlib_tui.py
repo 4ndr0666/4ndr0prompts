@@ -238,7 +238,7 @@ class ResultForm(npyscreen.FormBaseNew):
         )
         self.add(
             npyscreen.FixedText,
-            value="Audit logs in prompt_logs/prompt_audit.log",
+            value=f"Audit logs in {promptlib.DEFAULT_LOG_DIR}/prompt_audit.log",
             editable=False,
             relx=2,
             rely=3,
