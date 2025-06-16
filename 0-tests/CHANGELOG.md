@@ -5,6 +5,10 @@
 - document workflow in README
 - integrate shellcheck into pre-commit hooks and expand README instructions
 - add mapping table in promptlib2 and new tests
+- add --simple-cli argument for promptlib_tui with import test
+
+
+
 
 
 
