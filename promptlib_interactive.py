@@ -111,7 +111,7 @@ def log_prompts(prompts, category, slotset, output_path=None, log_dir=DEFAULT_LO
         output_path = f"prompts_{category}_{timestamp}.txt"
     format_structured_output(prompts, slotset, output_path)
     os.makedirs(log_dir, exist_ok=True)
-    with open(os.path.join(log_dir, "prompt_audit.log"), "a") as log:
+    with open(os.path.join(log_dir, "prompt_audit.log"), "a", encoding="utf-8") as log:
         for p in prompts:
             log.write(f"{timestamp}\t{category}\t{p}\n")
     return output_path
@@ -218,3 +218,4 @@ if __name__ == "__main__":
         interactive_main()
     else:
         cli_main()
+

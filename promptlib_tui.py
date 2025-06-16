@@ -67,7 +67,7 @@ def ensure_output_dir(category):
 
 def write_previewed_prompts(category, prompts, output_path):
     timestamp = now_str()
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(f"# Category: {category}\n")
         f.write(f"# Generated: {timestamp}\n")
         f.write(f"# Prompt Count: {len(prompts)}\n\n")
@@ -77,7 +77,9 @@ def write_previewed_prompts(category, prompts, output_path):
     audit_dir = promptlib.DEFAULT_LOG_DIR
     safe_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     os.makedirs(audit_dir, exist_ok=True)
-    with open(os.path.join(audit_dir, "prompt_audit.log"), "a") as log:
+    with open(
+        os.path.join(audit_dir, "prompt_audit.log"), "a", encoding="utf-8"
+    ) as log:
         for p in prompts:
             log.write(f"{safe_ts}\t{category}\t{p}\n")
 

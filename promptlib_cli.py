@@ -67,7 +67,9 @@ def write_previewed_prompts(category, prompts, output_path):
     audit_dir = DEFAULT_LOG_DIR
     safe_ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
     os.makedirs(audit_dir, exist_ok=True)
-    with open(os.path.join(audit_dir, "prompt_audit.log"), "a") as log:
+    with open(
+        os.path.join(audit_dir, "prompt_audit.log"), "a", encoding="utf-8"
+    ) as log:
         for p in prompts:
             log.write(f"{safe_ts}\t{category}\t{p}\n")
 
@@ -179,3 +181,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nAborted.")
         sys.exit(0)
+
