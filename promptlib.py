@@ -115,7 +115,7 @@ def interactive_prompt(enable_color=True):
         print(highlight("Please enter 'y' or 'n'.", enable_color))
     if save == "y":
         outpath = f"interactive_prompt_{catkey}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        with open(outpath, "w") as f:
+        with open(outpath, "w", encoding="utf-8") as f:
             f.write(f"category: {catkey}\n")
             f.write(f"prompt: {prompt}\n")
             for slot, value in slot_values.items():
@@ -142,7 +142,7 @@ def log_prompts(prompts, category, slotsets, output_path=None, log_dir=DEFAULT_L
         output_path = f"prompts_{category}_{timestamp}.txt"
     save_structured(prompts, category, slotsets, output_path)
     os.makedirs(log_dir, exist_ok=True)
-    with open(os.path.join(log_dir, "prompt_audit.log"), "a") as log:
+    with open(os.path.join(log_dir, "prompt_audit.log"), "a", encoding="utf-8") as log:
         for p, slots in zip(prompts, slotsets):
             slotjson = json.dumps(slots)
             log.write(f"{timestamp}\t{category}\t{p}\t{slotjson}\n")
