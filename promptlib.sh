@@ -17,13 +17,14 @@ mkdir -p "$DATA_HOME"
 # -----------
 
 usage() {
-    printf 'Usage: %s --category <category> [--count N] [--output FILE] [--no-color]\n' "$0"
-    printf '       %s --tui [--no-color]\n' "$0"
+    printf 'Usage: %s --category <category> [--count N] [--output FILE] [--no-color] [--dry-run]\n' "$0"
+    printf '       %s --tui [--no-color] [--dry-run]\n' "$0"
     printf '\n'
     printf '  --category <category>    Category key (batch mode, e.g. clothing_chest_exposure)\n'
     printf '  --count N                Number of prompts to generate (default: 5)\n'
     printf '  --output FILE            Output file saved under %s\n' "$DATA_HOME"
     printf '  --no-color               Disable cyan output highlighting\n'
+    printf '  --dry-run                Print command without executing\n'
     printf '  --tui                    Run interactive TUI mode\n'
     printf '\n'
     printf 'Available categories:\n'
@@ -39,6 +40,7 @@ CATEGORY=""
 COUNT=5
 OUTPUT=""
 NO_COLOR=0
+DRY_RUN=0
 
 while [[ $# -gt 0 ]]; do
     key="$1"
@@ -61,6 +63,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --no-color)
             NO_COLOR=1
+            shift
+            ;;
+        --dry-run)
+            DRY_RUN=1
             shift
             ;;
         -h|--help)
@@ -102,18 +108,28 @@ if [[ "$NO_COLOR" -eq 1 ]]; then
     cmd+=("--no-color")
 fi
 
+if [[ "$DRY_RUN" -eq 1 ]]; then
+    printf '[DRY-RUN] %s\n' "${cmd[*]}"
+    exit 0
+fi
+
 "${cmd[@]}"
 STATUS=$?
 if [[ $STATUS -eq 0 ]]; then
     printf '[SUCCESS] Prompts generated for category %s.\n' "$CATEGORY"
-    printf '%s [SUCCESS] category=%s\n' "$(date -Is)" "$CATEGORY" >>"$LOG_FILE"
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        printf '%s [SUCCESS] category=%s\n' "$(date -Is)" "$CATEGORY" >>"$LOG_FILE"
+    fi
     if [[ -n "$OUTPUT" ]]; then
         printf '[INFO] See file: %s\n' "$OUTPUT"
-        printf '%s [INFO] output=%s\n' "$(date -Is)" "$OUTPUT" >>"$LOG_FILE"
+        if [[ "$DRY_RUN" -eq 0 ]]; then
+            printf '%s [INFO] output=%s\n' "$(date -Is)" "$OUTPUT" >>"$LOG_FILE"
+        fi
     fi
 else
     printf '[ERROR] Prompt generation failed (exit code %s)\n' "$STATUS"
-    printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
+    if [[ "$DRY_RUN" -eq 0 ]]; then
+        printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
+    fi
 fi
-
 
