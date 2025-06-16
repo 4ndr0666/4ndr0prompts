@@ -48,12 +48,15 @@ def interactive_prompt(enable_color=True):
     for idx, cat in enumerate(categories, 1):
         print(f"  {highlight(str(idx), enable_color)}: {cat.replace('_', ' ').title()}")
     while True:
-        choice = input(highlight("Enter category number: ", enable_color))
+        try:
+            choice = input(highlight("Enter category number: ", enable_color))
+        except EOFError:
+            print(highlight("Invalid input. Try again.", enable_color))
+            continue
         if choice.isdigit() and 1 <= int(choice) <= len(categories):
             catkey = categories[int(choice) - 1]
             break
-        else:
-            print(highlight("Invalid selection. Try again.", enable_color))
+        print(highlight("Invalid selection. Try again.", enable_color))
     slotset = SLOTS[catkey]
     print(
         highlight(
@@ -66,20 +69,24 @@ def interactive_prompt(enable_color=True):
         for idx, val in enumerate(slotset[slot], 1):
             print(f"  {highlight(str(idx), enable_color)}: {val}")
         while True:
-            subchoice = input(
-                highlight(
-                    f"Choose (1-{len(slotset[slot])}) or 'r' for random: ", enable_color
+            try:
+                subchoice = input(
+                    highlight(
+                        f"Choose (1-{len(slotset[slot])}) or 'r' for random: ",
+                        enable_color,
+                    )
                 )
-            )
+            except EOFError:
+                print(highlight("Invalid input. Try again.", enable_color))
+                continue
             if subchoice.lower() == "r":
                 value = random.choice(slotset[slot])
                 print(highlight(f"Selected: {value}", enable_color))
                 break
-            elif subchoice.isdigit() and 1 <= int(subchoice) <= len(slotset[slot]):
+            if subchoice.isdigit() and 1 <= int(subchoice) <= len(slotset[slot]):
                 value = slotset[slot][int(subchoice) - 1]
                 break
-            else:
-                print(highlight("Invalid input. Try again.", enable_color))
+            print(highlight("Invalid input. Try again.", enable_color))
         slot_values[slot] = value
     # Construct prompt
     prompt = TEMPLATES[catkey]
@@ -93,11 +100,19 @@ def interactive_prompt(enable_color=True):
     for slot, value in slot_values.items():
         print(highlight(f"{slot}: {value}", enable_color))
 
-    save = (
-        input(highlight("\nSave this prompt to a file? (y/n): ", enable_color))
-        .strip()
-        .lower()
-    )
+    while True:
+        try:
+            save = (
+                input(highlight("\nSave this prompt to a file? (y/n): ", enable_color))
+                .strip()
+                .lower()
+            )
+        except EOFError:
+            print(highlight("Invalid input. Try again.", enable_color))
+            continue
+        if save in {"y", "n"}:
+            break
+        print(highlight("Please enter 'y' or 'n'.", enable_color))
     if save == "y":
         outpath = f"interactive_prompt_{catkey}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
         with open(outpath, "w") as f:
@@ -214,3 +229,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
