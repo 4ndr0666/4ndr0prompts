@@ -41,4 +41,3 @@ def generate_prompt(template: str, slots: Dict[str, list]) -> str:
         if not changed:
             break
     return result
-

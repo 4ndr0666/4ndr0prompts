@@ -2,10 +2,13 @@
 """
 promptlib_tui.py — Error-hardened, robust TUI for promptlib.py red team prompt mutation.
 Requirements: npyscreen (pip install npyscreen), promptlib.py in same directory.
+
+Run with ``--simple-cli`` for a minimal prompt generator when a full TUI is not available.
 """
 
 import sys
 import os
+import argparse
 
 # ---- TTY Safety Check ----
 if not sys.stdin.isatty() or not sys.stdout.isatty():
@@ -277,6 +280,15 @@ def safe_cli_menu():
 
 
 if __name__ == "__main__":
-    safe_cli_menu()
-    PromptGenApp().run()
+    parser = argparse.ArgumentParser(description="PromptLib TUI")
+    parser.add_argument(
+        "--simple-cli",
+        action="store_true",
+        help="Run minimal CLI instead of the full TUI",
+    )
+    args = parser.parse_args()
 
+    if args.simple_cli:
+        safe_cli_menu()
+    else:
+        PromptGenApp().run()
