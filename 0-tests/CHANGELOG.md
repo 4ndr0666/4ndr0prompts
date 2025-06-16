@@ -13,3 +13,5 @@
 
 
 
+- enforce utf-8 encoding for file writes
+

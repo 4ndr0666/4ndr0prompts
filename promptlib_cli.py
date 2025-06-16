@@ -57,7 +57,7 @@ def ensure_output_dir(category):
 
 def write_previewed_prompts(category, prompts, output_path):
     timestamp = now_str()
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(f"# Category: {category}\n")
         f.write(f"# Generated: {timestamp}\n")
         f.write(f"# Prompt Count: {len(prompts)}\n\n")

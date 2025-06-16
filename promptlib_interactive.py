@@ -96,7 +96,7 @@ def format_structured_output(prompts, slotset, output_path):
     headers = list(slotset.keys())
     header_line = " | ".join(f"{h:^18}" for h in headers) + " | PROMPT"
     sep = "-" * (len(header_line) + 5)
-    with open(output_path, "w") as f:
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(f"{header_line}\n{sep}\n")
         for p in prompts:
             row = " | ".join(
