@@ -267,10 +267,33 @@ def safe_cli_menu():
     print("Choose a category:")
     for idx, cat in enumerate(cats):
         print(f"{idx+1}. {cat}")
-    i = int(input("Enter number: ")) - 1
-    n = int(input("Prompt count: "))
+    while True:
+        try:
+            i = int(input("Enter number: ")) - 1
+        except (ValueError, EOFError):
+            print("Invalid input. Try again.")
+            continue
+        if 0 <= i < len(cats):
+            break
+        print("Choice out of range. Try again.")
+
+    while True:
+        try:
+            n = int(input("Prompt count: "))
+        except (ValueError, EOFError):
+            print("Invalid input. Try again.")
+            continue
+        if n > 0:
+            break
+        print("Count must be a positive integer.")
+
     for _ in range(n):
-        print(generate_prompt(promptlib.TEMPLATES[cats[i]], promptlib.SLOTS[cats[i]]))
+        print(
+            generate_prompt(
+                promptlib.TEMPLATES[cats[i]],
+                promptlib.SLOTS[cats[i]],
+            )
+        )
 
 
 if __name__ == "__main__":
