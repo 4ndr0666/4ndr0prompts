@@ -1,9 +1,14 @@
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-executables-have-shebangs  
   - repo: local
     hooks:
       - id: codex-merge-clean
+        args: ['--preserve-executability']
         name: codex-merge-clean
-        entry: bash 0-tests/codex-merge-clean.sh
+        entry: 0-tests/codex-merge-clean.sh
         language: script
         pass_filenames: true
         files: ''
@@ -13,6 +18,12 @@ repos:
         entry: bash -c 'PYTHONPATH=. pytest -q'
         language: system
         types: [python]
+    hooks:
+      - id: shellcheck
+        name: ShellCheck (bash)
+        entry: shellcheck -x
+        language: system
+        types: [shell]
   - repo: https://github.com/astral-sh/ruff-pre-commit
     rev: v0.12.0
     hooks:
@@ -22,11 +33,4 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-  - repo: https://github.com/koalaman/shellcheck
-    rev: v0.9.0
-    hooks:
-      - id: shellcheck
-        files: '\.(sh)$'
-    
-
 
