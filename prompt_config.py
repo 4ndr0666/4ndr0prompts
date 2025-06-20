@@ -8,26 +8,23 @@ import os
 import random
 from typing import Dict
 
-_CACHE: dict[str, tuple[Dict[str, str], Dict[str, Dict[str, list]]]] = {}
-
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), "dataset", "templates.json")
+
+_templates: Dict[str, str] | None = None
+_slots: Dict[str, Dict[str, list]] | None = None
 
 
 def load_config(
     path: str = CONFIG_PATH,
 ) -> tuple[Dict[str, str], Dict[str, Dict[str, list]]]:
-    """Load templates and slots from JSON configuration.
-
-    Results are cached per absolute path to avoid repeated file reads.
-    """
-    abspath = os.path.abspath(path)
-    if abspath not in _CACHE:
-        with open(abspath, "r", encoding="utf-8") as fh:
+    """Load templates and slots from JSON configuration."""
+    global _templates, _slots
+    if _templates is None or _slots is None:
+        with open(path, "r", encoding="utf-8") as fh:
             data = json.load(fh)
-        templates = data.get("templates", {})
-        slots = data.get("slots", {})
-        _CACHE[abspath] = (templates, slots)
-    return _CACHE[abspath]
+        _templates = data.get("templates", {})
+        _slots = data.get("slots", {})
+    return _templates, _slots
 
 
 def generate_prompt(template: str, slots: Dict[str, list]) -> str:
