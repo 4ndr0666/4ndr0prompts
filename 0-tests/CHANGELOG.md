@@ -6,18 +6,10 @@
 - integrate shellcheck into pre-commit hooks and expand README instructions
 - add mapping table in promptlib2 and new tests
 - add --simple-cli argument for promptlib_tui with import test
-
-
-
-
-
-
-
 - enforce utf-8 encoding for file writes
-
 - add parse_rawdata.py (5 funcs, 122 lines) and tests
 - expand parse_rawdata.py to 7 funcs (~155 lines) with --trim-sentences flag and
-  slot-report escaping; add 3 tests; coverage +4 pp
+- slot-report escaping; add 3 tests; coverage +4 pp
 
 
 
