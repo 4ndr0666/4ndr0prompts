@@ -1,6 +1,6 @@
 #!/bin/sh
 # promptlib.sh - Production-ready shell wrapper for promptlib.py
-set -euo pipefail
+set -euo 
 
 # -----------
 # CONFIGURATION
