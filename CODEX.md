@@ -1,237 +1,163 @@
-# CODEX.md — Work-order: canonicalise raw NSFW prompt corpus
-# Branch: feature/rawdata-canonicalisation
-# Author: 4ndr0prompts Codex Agent
-# Status: 🔴 OPEN
+###############################################################################
+# CODEX.md — Sprint “Raw-Data Canonicalisation v2”
+# Repo: 4ndr0prompts | Branch: feature/raw-canonicalisation-v2
+# Status: 🔴 OPEN (owner: @<your-initials>)
+# Updated: 2025-06-19
+#
+# Mission
+# ───────
+# ◉ Elevate the raw-data pipeline so that *all* categories & slots in
+#   `dataset/rawdata.txt` are captured, normalised, deduped and exported into a
+#   deterministic `templates.json` — zero placeholders, no typos.
+# ◉ Harden parser, tests and audit artifacts for CI and security review.
+###############################################################################
 
-## 1 ▪︎ Objective
-Bring the un-curated **`dataset/rawdata.txt`** under the same rigorous,
-machine-consumable **template/slot** schema already used by
-`dataset/templates.json`.  
-Deliver a reproducible pipeline that:
-
-1. **Parses** every prompt in `rawdata.txt`.
-2. **Assigns** each prompt to exactly one canonical category.
-3. **Extracts** every concrete token that belongs in a slot list.
-4. **Emits** a **new, audit-grade `templates.json`** (100 % concrete values,
-   zero placeholders) and a supplementary **`slots_report.tsv`** for review.
-5. Ships unit tests guaranteeing no placeholder survives and every generated
-   prompt renders cleanly.
-
-## 2 ▪︎ Deliverables
-| Path | Description |
-|------|-------------|
-| `scripts/parse_rawdata.py` | One-shot parser → JSON emitter (idempotent, 0 deps). |
-| `dataset/templates.json`   | Over-written canonical file (auto-generated, committed). |
-| `dataset/slots_report.tsv` | Tab-separated audit trail (category ⇄ slot ⇄ value). |
-| `tests/test_rawdata_parse.py` | PyTest guaranteeing correctness & no placeholders. |
-| `0-tests/CHANGELOG.md` | Entry summarising function/line counts & coverage delta. |
-
-## 3 ▪︎ Directory layout after merge
-```
-
-.
-├── dataset/
-│   ├── rawdata.txt
-│   ├── templates.json        # ← regenerated
-│   └── slots\_report.tsv      # ← new
-├── scripts/
-│   └── parse\_rawdata.py      # ← new
-└── tests/
-└── test\_rawdata\_parse.py # ← new
-
-````
-
-## 4 ▪︎ Implementation details
-### 4.1 `scripts/parse_rawdata.py`
-Fully-contained, lint-clean, **PEP-8/black/ruff** compliant.
-
-```python
-#!/usr/bin/env python3
-"""parse_rawdata.py — canonicalise dataset/rawdata.txt into templates.json.
-
-Run:
-    $ PYTHONPATH=. scripts/parse_rawdata.py --write
-
-Always dry-runs unless --write is passed.
-"""
-
-from __future__ import annotations
-import argparse, json, re, sys, textwrap
-from collections import defaultdict
-from pathlib import Path
-from typing import Final
-
-ROOT: Final      = Path(__file__).resolve().parents[1]
-DATASET: Final   = ROOT / "dataset"
-RAW: Final       = DATASET / "rawdata.txt"
-TJSON: Final     = DATASET / "templates.json"
-REPORT: Final    = DATASET / "slots_report.tsv"
-
-# --------------------------------------------------------------------------- #
-# 1.  Regex heuristics for category tagging (ordered, first-match wins)
-CATEGORY_RULES: list[tuple[str, re.Pattern]] = [
-    ("insertion_oral_mouth", re.compile(r"\b(suck|mouth|tongue|blow)\b", re.I)),
-    ("clothing_chest_exposure", re.compile(r"\b(breast|brest|bosom|areola)\b", re.I)),
-    ("turning_bending_buttocks", re.compile(r"\b(butt|glúteos|tanga|bottom)\b", re.I)),
-    ("multi_person_interaction", re.compile(r"\b(two|2|manhoods|kiss(?:es)?)\b", re.I)),
-    ("white_fluid_dripping",    re.compile(r"\b(viscous liquid|yfluid|esperma|fluid)\b", re.I)),
-]
-DEFAULT_CAT: Final = "other_uncategorized"
-
-# 2.  Slot tokens we care about per category
-SLOT_PATTERNS: dict[str, dict[str, re.Pattern]] = {
-    "clothing_chest_exposure": {
-        "CLOTHING_TOP":   re.compile(r"(?:top garment|blouse|shirt|dress|article of clothing)", re.I),
-        "SKIN_DETAIL":    re.compile(r"(blushing areolas|smooth skin|freckled skin|oiled)", re.I),
-        "ACTION":         re.compile(r"(jiggle|dance|sway|grop[e|es])", re.I),
-    },
-    "turning_bending_buttocks": {
-        "CLOTHING_BOTTOM": re.compile(r"(skirt|pants|tanga|trunks|leggings?)", re.I),
-        "BUTTOCKS_DESC":   re.compile(r"(round buttocks|bare buttocks|bottom|backside)", re.I),
-        "BODY_MARKING":    re.compile(r"(tattoo[^,.\n]*)", re.I),
-    },
-    "insertion_oral_mouth": {
-        "OBJECT":          re.compile(r"(black object|wiener|dick|tube|cylinder)", re.I),
-        "LIQUID_DESC":     re.compile(r"(viscous liquid|milky|yfluid|saliva)", re.I),
-        "EYE_CONTACT":     re.compile(r"(eye contact|stare|looking at the camera)", re.I),
-    },
-    # … extend as needed
-}
-
-# --------------------------------------------------------------------------- #
-Prompt = dict[str, str]   # {"text": str, "category": str}
-
-def _read_raw() -> list[str]:
-    return [ln.strip() for ln in RAW.read_text(encoding="utf-8").splitlines() if ln.strip()]
-
-def _classify(txt: str) -> str:
-    for cat, pat in CATEGORY_RULES:
-        if pat.search(txt):
-            return cat
-    return DEFAULT_CAT
-
-def _extract_slots(category: str, txt: str) -> dict[str, list[str]]:
-    slots: dict[str, list[str]] = defaultdict(list)
-    for slot, pat in SLOT_PATTERNS.get(category, {}).items():
-        for m in pat.finditer(txt):
-            val = m.group(0).lower()
-            if val not in slots[slot]:
-                slots[slot].append(val)
-    return slots
-
-def parse() -> tuple[dict[str, str], dict[str, dict[str, list[str]]]]:
-    templates: dict[str, str] = defaultdict(str)
-    slots: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
-
-    for paragraph in _read_raw():
-        cat  = _classify(paragraph)
-        tmpl = templates.get(cat) or paragraph  # naïve: first seen becomes template
-        templates[cat] = tmpl
-
-        for slot, values in _extract_slots(cat, paragraph).items():
-            slots[cat][slot].extend(v for v in values if v not in slots[cat][slot])
-
-    # deterministic ordering
-    templates = dict(sorted(templates.items()))
-    slots      = {k: {s: sorted(v) for s, v in sv.items()} for k, sv in slots.items()}
-    return templates, slots
-
-# --------------------------------------------------------------------------- #
-def main() -> None:
-    p = argparse.ArgumentParser(description="Canonicalise rawdata.txt into templates.json")
-    p.add_argument("--write", action="store_true", help="Write output files to dataset/")
-    args = p.parse_args()
-
-    templates, slots = parse()
-    payload = {"templates": templates, "slots": slots}
-
-    if args.write:
-        DATASET.mkdir(exist_ok=True)
-        TJSON.write_text(json.dumps(payload, indent=2, ensure_ascii=False), encoding="utf-8")
-        with REPORT.open("w", encoding="utf-8") as fh:
-            for cat, slotmap in slots.items():
-                for slot, vals in slotmap.items():
-                    for v in vals:
-                        fh.write(f"{cat}\t{slot}\t{v}\n")
-        print(f"[OK] wrote {TJSON.relative_to(ROOT)} and slots_report.tsv")
-    else:
-        print(json.dumps(payload, indent=2, ensure_ascii=False))
-
-if __name__ == "__main__":
-    main()
-````
-
-### 4.2 `tests/test_rawdata_parse.py`
-
-```python
-#!/usr/bin/env python3
-"""CI sanity checks for parse_rawdata.py."""
-from pathlib import Path, PurePosixPath
-import json, re, subprocess, sys
-
-ROOT = Path(__file__).resolve().parents[1]
-DATASET = ROOT / "dataset"
-SCRIPT  = ROOT / "scripts" / "parse_rawdata.py"
-
-def _run(*extra) -> str:
-    return subprocess.check_output([sys.executable, SCRIPT, *extra], text=True)
-
-def test_no_placeholder_tokens() -> None:
-    payload = json.loads(_run())
-    placeholder_re = re.compile(r"\[[A-Z_]+\]")
-    # templates
-    for tmpl in payload["templates"].values():
-        assert not placeholder_re.search(tmpl), tmpl
-    # slots
-    for slotmap in payload["slots"].values():
-        for values in slotmap.values():
-            for v in values:
-                assert "[" not in v and "]" not in v
-
-def test_templates_parsable() -> None:
-    """Render 10 prompts per category → no placeholders."""
-    payload = json.loads(_run())
-    for cat, tmpl in payload["templates"].items():
-        for _ in range(10):
-            out = tmpl      # (real rendering happens elsewhere)
-            assert "[" not in out and "]" not in out
-```
-
-### 4.3 Shell helper (optional)
-
+## 0 ▪︎ Prerequisites
 ```bash
-# 0-tests/codex-generate.sh
-set -euo pipefail
-printf '🔄  Canonicalising raw dataset…\n'
-python3 scripts/parse_rawdata.py --write
-ruff --fix .
-black .
+git checkout -b feature/raw-canonicalisation-v2
+./0-tests/codex-merge-clean.sh $(git ls-files '*.py' '*.sh')
+ruff --fix . && black .
 pytest -q
-```
+````
 
-## 5 ▪︎ Workflow tasks
-
-| # | Action                                                       | Assignee | Done |
-| - | ------------------------------------------------------------ | -------- | ---- |
-| 1 | `git checkout -b feature/rawdata-canonicalisation`           | *you*    | ☐    |
-| 2 | Copy this CODEX.md to repo root                              | *you*    | ☐    |
-| 3 | Add **scripts/parse\_rawdata.py** & tests exactly as above   | *you*    | ☐    |
-| 4 | Run `bash 0-tests/codex-generate.sh` – commit artefacts      | *you*    | ☐    |
-| 5 | Update `0-tests/CHANGELOG.md` with function/line counts      | *you*    | ☐    |
-| 6 | Open PR, include pytest-cov delta + artefact diff            | *you*    | ☐    |
-| 7 | Reviewer executes guard-rail commands (`pre-commit run ...`) | reviewer | ☐    |
-
-## 6 ▪︎ Success criteria
-
-* **`dataset/templates.json`** contains **every** category present in
-  `rawdata.txt` - no placeholders, each prompt slot-filled.
-* `pytest -q` and `ruff/black/shellcheck` all pass.
-* `parse_rawdata.py --write` is **idempotent** and can be CI-scheduled
-  (e.g. nightly) to keep templates fresh when `rawdata.txt` grows.
+> ✅ **Checkpoint:** tests green, no merge artifacts.
 
 ---
 
-> After merging, the red-team can immediately run
-> `promptlib2.get_random_prompts()` against the regenerated JSON to begin
-> adversarial fuzzing using the concrete data extracted from the raw corpus.
+## 1 ▪︎ Deliverable Matrix
 
+| ID | Deliverable / Path                       | Key Acceptance Tests                                  |
+| -- | ---------------------------------------- | ----------------------------------------------------- |
+| D1 | `scripts/parse_rawdata.py` (rev 2)       | 100 % slots deduped; handles FileNotFound; ≥90 % cov. |
+| D2 | `dataset/templates.json` (regen)         | Contains **all 6 categories**, no placeholder tokens. |
+| D3 | `dataset/slots_report.tsv` (regen)       | TSV ✓; values escaped; ≥1 row per slot value.         |
+| D4 | `tests/test_rawdata_parse.py` (expanded) | ◻ no duplicates ◻ no empty slots ◻ all cats covered.  |
+| D5 | `0-tests/CHANGELOG.md` (entry)           | Function & line counts + coverage delta.              |
+
+---
+
+## 2 ▪︎ Task Breakdown
+
+### A. **Parser Hardening**
+
+| Step | Action                                                                                                                         | File               | Owner |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------ | ----- |
+| A-1  | Add `try/except FileNotFoundError` in `_read_raw()` → exit 1 with msg                                                          | `parse_rawdata.py` |       |
+| A-2  | Replace `list` accumulators with `set`, convert to sorted list at end                                                          | ″                  |       |
+| A-3  | Escape `\t` and `\n` when writing `slots_report.tsv`                                                                           | ″                  |       |
+| A-4  | Add `normalize(text:str)->str` (lowercase, ascii-fold, typo fix: `chek→cheek`, `brest→breast`) and run on every captured value | ″                  |       |
+| A-5  | Expand `CATEGORY_RULES` & `SLOT_PATTERNS` per audit table below                                                                | ″                  |       |
+
+#### 𝐒𝐋𝐎𝐓\_𝐏𝐀𝐓𝐓𝐄𝐑𝐍𝐒 additions
+
+| Category                   | Slot             | Regex fragment   |               |          |             |           |      |         |
+| -------------------------- | ---------------- | ---------------- | ------------- | -------- | ----------- | --------- | ---- | ------- |
+| turning\_bending\_buttocks | CLOTHING\_BOTTOM | \`skirt          | pants         | trunks   | leggings?\` |           |      |         |
+| turning\_bending\_buttocks | BUTTOCKS\_DESC   | \`round buttocks | bare buttocks | backside | thighs\`    |           |      |         |
+| clothing\_chest\_exposure  | ACTION           | \`drool          | smack         | lean     | dance       | jiggle    | sway | grope\` |
+| white\_fluid\_dripping     | LIQUID\_DESC     | \`pearly         | milky         | viscous  | ropey       | stringy\` |      |         |
+| multi\_person\_interaction | INTERACTION      | \`kiss(?\:es)?   | touch         | caress   | stroke\`    |           |      |         |
+
+*(extend as observed; update regex in code)*
+
+---
+
+### B. **Templates & Slot Generation**
+
+| Step | Action                                                                                                                | Owner |
+| ---- | --------------------------------------------------------------------------------------------------------------------- | ----- |
+| B-1  | Implement `--trim-sentences N` flag (default 1) → keep first *N* sentences as template string.                        |       |
+| B-2  | Ensure every category appearing in raw data has a **non-empty slot map** (create `{}` if no slots extracted).         |       |
+| B-3  | Run `python scripts/parse_rawdata.py --write --trim-sentences 1` → regenerates `templates.json` & `slots_report.tsv`. |       |
+| B-4  | Manually scan `slots_report.tsv` for obvious junk after first run; re-tune patterns if needed.                        |       |
+
+---
+
+### C. **Test Suite Expansion**
+
+| Step | Action                                                                                                                             | File                          | Owner |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------- | ----------------------------- | ----- |
+| C-1  | Add `test_all_categories_accounted`, `test_no_empty_slot_lists`, `test_no_duplicate_slot_values` (see audit code)                  | `tests/test_rawdata_parse.py` |       |
+| C-2  | Add TSV integrity test: open file after `--write` and `assert len(line.split('\t'))==3`.                                           | ″                             |       |
+| C-3  | Update existing tests to call `parse_rawdata.py --write` inside tmp dir (use `tmp_path`) so artifacts are produced for assertions. | ″                             |       |
+
+---
+
+### D. **CHANGELOG & Documentation**
+
+| Step | Action                                                                                                                                          | File                   | Owner |
+| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------- | ----- |
+| D-1  | Append section under **Unreleased**: “Enhanced parser (7 funcs, 155 lines) … +3 tests, coverage +4 pp”                                          | `0-tests/CHANGELOG.md` |       |
+| D-2  | In `README.md` → update *Usage* snippet: “Run `scripts/parse_rawdata.py --write --trim-sentences 1` after any update to `dataset/rawdata.txt`.” | `README.md`            |       |
+
+---
+
+### E. **Verification & Merge**
+
+```bash
+# After all code edits
+ruff --fix .
+black .
+pytest -q --cov=.
+./scripts/parse_rawdata.py --write --trim-sentences 1
+bash 0-tests/codex-generate.sh        # should pass silently
+git add -u
+git commit -m "feat(parser): hardened rawdata canonicalisation (#A1-E2)"
+```
+
+PR body must include:
+
+* Function/line counts for **parse\_rawdata.py**
+* `pytest-cov` summary (before vs after)
+* Sample diff of `templates.json` (old→new)
+
+---
+
+## 3 ▪︎ Audit Reference Tables (for dev use)
+
+### 3.1 Missing Slot Coverage (pre-fix)
+
+| Category                   | Slot  | Status         |
+| -------------------------- | ----- | -------------- |
+| multi\_person\_interaction | *ALL* | ❌ none present |
+| white\_fluid\_dripping     | *ALL* | ❌ none present |
+| other\_uncategorized       | *ALL* | ❌ none present |
+
+### 3.2 Duplicate / Misspelt Values
+
+| Value in TSV                                            | Normalised To                               |
+| ------------------------------------------------------- | ------------------------------------------- |
+| `tattoo of a black spade on her right bottom butt chek` | `tattoo of black spade on right butt cheek` |
+| `tattoo of a black spade on her right butt chek`        | `tattoo of black spade on right butt cheek` |
+| `tattoo` (generic)                                      | ***REMOVE*** (too generic)                  |
+
+*(Normalisation implemented in `normalize()`)*
+
+---
+
+## 4 ▪︎ Acceptance Checklist (Reviewer)
+
+* [ ] `dataset/templates.json` contains **6** categories, each template ≤1 sentence, no misspellings (`brest`→`breast` etc.).
+* [ ] `dataset/slots_report.tsv` row-count ≥ distinct slot values, each line has 3 cols, no embedded tabs.
+* [ ] `pytest -q` + coverage ≥ previous +4 pp.
+* [ ] `ruff`, `black`, `shellcheck` all green (`pre-commit run --all-files`).
+* [ ] No merge-artifact markers (`<<<<<<<`, `=======`, `>>>>>>>`) in repo (`git grep -nE '<<<<<<<|>>>>>>|======='` returns empty).
+* [ ] CHANGELOG entry includes function/line metrics & coverage delta.
+
+---
+
+## 5 ▪︎ Timeline (ideal)
+
+| Day       | Task IDs          | Hours     |
+| --------- | ----------------- | --------- |
+| D-0       | A-1 → A-3         | 2         |
+| D-0       | A-4 → B-2         | 2         |
+| D-1       | B-3 → B-4         | 1         |
+| D-1       | C-1 → C-3         | 2         |
+| D-1       | D-1 → D-2         | 0.5       |
+| D-1       | Verification & PR | 1         |
+| **Total** |                   | **6.5 h** |
+
+---
+
+*End of CODEX.md*
