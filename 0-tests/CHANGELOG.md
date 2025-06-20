@@ -15,3 +15,6 @@
 
 - enforce utf-8 encoding for file writes
 
+- add parse_rawdata.py (5 funcs, 122 lines) and tests
+
+
