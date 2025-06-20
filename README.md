@@ -27,3 +27,11 @@ Run all checks manually with:
 pre-commit run --all-files
 ```
 
+To regenerate the template dataset in verbatim mode:
+
+```bash
+PYTHONPATH=. python scripts/parse_rawdata.py --write --trim-sentences 1
+```
+
+
+
