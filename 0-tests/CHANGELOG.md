@@ -14,3 +14,4 @@
 
 
 
+- restore parse_rawdata pipeline and add HTTP API server

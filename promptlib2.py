@@ -1,35 +1,23 @@
 #!/usr/bin/env python3
 """promptlib2.py — dataset-based prompt retrieval library.
 
-This module loads NSFW prompts from the dataset directory and provides
-an interface similar to ``promptlib.py``. Prompts are categorized using
-simple keyword heuristics for filtering.
+This module loads NSFW prompts from ``dataset/templates.json`` via the
+canonical loader in :mod:`prompt_config`. It provides a small API for
+generating prompts and listing categories/slots.  Legacy parsing of the
+``nsfwprompts.txt`` corpus has been removed in favour of the canonical
+JSON configuration.
 """
 
 from __future__ import annotations
 
 import argparse
-import hashlib
-import os
 import random
-import re
 from dataclasses import dataclass
-from typing import Iterable, List
+from typing import Iterable, List, Dict, Tuple
 
-DATASET_PATH = os.path.join(os.path.dirname(__file__), "dataset", "nsfwprompts.txt")
+import prompt_config
+
 DEFAULT_CATEGORY = "other_uncategorized"
-
-# Mapping from dataset slugs to template keys.
-# Keep this in sync with ``dataset/templates.json`` to ensure category names
-# remain stable across libraries.
-CATEGORY_MAP = {
-    "mention_of_removing_cloths_garments_dress_and_revealing_chest": "clothing_chest_exposure",
-    "mentions_of_turning_around_revealing_butt": "turning_bending_buttocks",
-    "mention_of_inserting_an_object_or_anything_into_mouth": "insertion_oral_mouth",
-    "mention_of_multiple_people": "multi_person_interaction",
-    "if_not_in_any_categories_above_yet_mention_of_white_fluid_liquid": "white_fluid_dripping",
-    "everything_else_left_over": "other_uncategorized",
-}
 
 
 @dataclass
@@ -37,93 +25,69 @@ class PromptEntry:
     category: str
     prompt: str
     tags: List[str]
-    original_id: str
-    source_hash: str
+    original_id: str = ""
+    source_hash: str = ""
 
 
-def _clean_line(text: str) -> str:
-    """Return cleaned prompt text or an empty string if invalid."""
-    cleaned = text.strip()
-    if not cleaned or cleaned.startswith(("###", "---")):
-        return ""
-    cleaned = re.sub(r"^Prompt\s*\d+:\s*", "", cleaned, flags=re.IGNORECASE)
-    cleaned = re.sub(r"^\d+\.\s*", "", cleaned)
-    return cleaned.strip()
+def _load() -> Tuple[Dict[str, str], Dict[str, Dict[str, List[str]]]]:
+    """Load templates and slots using :func:`prompt_config.load_config`."""
+    global _CONFIG_CACHE
+    if _CONFIG_CACHE is None:
+        _CONFIG_CACHE = prompt_config.load_config()
+    return _CONFIG_CACHE
 
 
-def _slugify(text: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "_", text.lower()).strip("_")
+_CONFIG_CACHE: Tuple[Dict[str, str], Dict[str, Dict[str, List[str]]]] | None = None
 
 
-def parse_dataset(path: str = DATASET_PATH) -> List[tuple[int, str, str]]:
-    """Parse dataset file into ``(line_no, category, text)`` tuples."""
-    prompts: List[tuple[int, str, str]] = []
-    current_category = DEFAULT_CATEGORY
-    with open(path, "r", encoding="utf-8") as fh:
-        for idx, line in enumerate(fh, 1):
-            stripped = line.strip()
-            if stripped.startswith("### Verification"):
-                break
-            m = re.match(r"###\s*Category\s*\d+:(.*)", stripped)
-            if m:
-                slug = _slugify(m.group(1))
-                current_category = CATEGORY_MAP.get(slug, slug) or DEFAULT_CATEGORY
-                continue
-            cleaned = _clean_line(stripped)
-            if cleaned:
-                prompts.append((idx, current_category, cleaned))
-    return prompts
-
-
-def aggregate_prompts(path: str = DATASET_PATH) -> List[PromptEntry]:
-    """Aggregate prompts with metadata from the dataset."""
-    prompts = parse_dataset(path)
+def load_prompts() -> List[PromptEntry]:
+    """Generate one prompt per category using the canonical templates."""
+    templates, slots = _load()
     entries: List[PromptEntry] = []
-    seen = set()
-    for line_no, category, text in prompts:
-        if text in seen:
-            continue
-        seen.add(text)
-        source_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        entries.append(
-            PromptEntry(
-                category=category,
-                prompt=text,
-                tags=[category],
-                original_id=f"{os.path.basename(path)}:line_{line_no}",
-                source_hash=source_hash,
-            )
-        )
+    for cat, template in templates.items():
+        slotset = slots.get(cat, {})
+        prompt = prompt_config.generate_prompt(template, slotset)
+        entries.append(PromptEntry(category=cat, prompt=prompt, tags=[cat]))
     return entries
 
 
-_PROMPTS_CACHE: List[PromptEntry] | None = None
+def get_categories() -> List[str]:
+    """Return all available categories."""
+    templates, _ = _load()
+    return sorted(templates.keys())
 
 
-def load_prompts(path: str = DATASET_PATH) -> List[PromptEntry]:
-    """Load prompts from dataset with caching."""
-    global _PROMPTS_CACHE
-    if _PROMPTS_CACHE is None:
-        _PROMPTS_CACHE = aggregate_prompts(path)
-    return list(_PROMPTS_CACHE)
+def get_slots(category: str) -> Dict[str, List[str]]:
+    """Return slot mapping for ``category`` or raise ``KeyError``."""
+    _, slots = _load()
+    if category not in slots:
+        raise KeyError(category)
+    return slots[category]
 
 
 def list_categories(prompts: Iterable[PromptEntry] | None = None) -> List[str]:
     """Return sorted categories from prompts."""
-    data = list(prompts) if prompts else load_prompts()
-    return sorted({p.category for p in data})
+    if prompts is not None:
+        return sorted({p.category for p in prompts})
+    return get_categories()
 
 
 def get_random_prompts(
     count: int = 1, category: str | None = None
 ) -> List[PromptEntry]:
     """Return a list of random ``PromptEntry`` objects."""
-    data = load_prompts()
-    if category:
-        data = [p for p in data if p.category == category]
-    if not data:
+    templates, slots = _load()
+    categories = [category] if category else list(templates.keys())
+    if category and category not in templates:
         return []
-    return random.sample(data, k=min(count, len(data)))
+    entries: List[PromptEntry] = []
+    for _ in range(count):
+        cat = random.choice(categories)
+        template = templates[cat]
+        slotset = slots.get(cat, {})
+        prompt = prompt_config.generate_prompt(template, slotset)
+        entries.append(PromptEntry(category=cat, prompt=prompt, tags=[cat]))
+    return entries
 
 
 def main() -> None:

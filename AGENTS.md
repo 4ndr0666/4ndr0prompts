@@ -31,6 +31,8 @@
 # The `prompt_config.py` module loads this JSON and caches it for use by
 # `promptlib.py`, `promptlib2.py`, and related front-ends.
 # This unified loader should be used whenever templates or slots are required.
+# The lightweight HTTP server `server.py` exposes these via
+# `GET /categories` and `GET /slots/<category>` for programmatic access.
 #
 # General Best Practices
 # ──────────────────
@@ -129,4 +131,5 @@
 # • Never bypass lint, dry-run, or coverage thresholds without written exception.
 #
 # End of AGENTS.md
+
 

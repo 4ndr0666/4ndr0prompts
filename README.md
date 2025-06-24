@@ -33,5 +33,19 @@ To regenerate the template dataset in verbatim mode:
 PYTHONPATH=. python scripts/parse_rawdata.py --write --trim-sentences 1
 ```
 
+### API Endpoints
+
+Start the lightweight HTTP server:
+
+```bash
+python server.py
+```
+
+Available routes:
+
+- `GET /categories` – list all categories
+- `GET /slots/<category>` – slot values for a category
+
+
 
 
