@@ -8,7 +8,7 @@
 # ───────
 # Convert **dataset/rawdata.txt** into a fully machine-readable, verbatim
 # template + slot schema while **preserving every original token exactly as it
-# appears in the raw corpus**.  
+# appears in the raw corpus**.
 # No placeholders, no editorial “fixes” or spell-corrections—misspellings that
 # helped bypass filters are *valuable signal* and **must remain untouched**.
 ###############################################################################
@@ -23,15 +23,42 @@ pytest -q
 
 ---
 
-## 1 ▪︎ Deliverable Matrix
+## 1 ▪︎ Project Files & Deliverable Matrix
 
 | ID     | Output / Path                            | Acceptance Tests                                   |
 | ------ | ---------------------------------------- | -------------------------------------------------- |
-| **D1** | `scripts/parse_rawdata.py` (rev 2)       | ≥ 90 % cov. 0 typos *added*, exact raw tokens kept |
+| **D1** | `dataset/rawdata.txt` (rev 2)            | ≥ 90 % cov. 0 typos *added*, exact raw tokens kept |
 | **D2** | `dataset/templates.json` (regen)         | 6 categories, ≤1 sentence each, verbatim text      |
-| **D3** | `dataset/slots_report.tsv` (regen)       | Each row = category⇄slot⇄value, raw spelling kept  |
-| **D4** | `tests/test_rawdata_parse.py` (expanded) | ✔ no placeholders ✔ no **identical** duplicates    |
+| **D3** | `dataset/nsfwprompts.txt` (regen)        | Each row = category⇄slot⇄value, raw spelling kept  |
+| **D4** | `tests/` `tests/ui` (expanded)           | ✔ no placeholders ✔ no **identical** duplicates    |
 | **D5** | `0-tests/CHANGELOG.md`                   | Function+line counts & coverage delta              |
+
+├── 0-tests
+│   ├── CHANGELOG.md
+│   ├── codex-generate.sh
+│   └── codex-merge-clean.sh
+├── AGENTS.md
+├── CODEX.md
+├── dataset
+│   ├── nsfwprompts.txt
+│   ├── rawdata.txt
+│   └── templates.json
+├── prompt_config.py
+├── promptlib2.py
+├── promptlib.py
+├── prompts.sh
+├── pyproject.toml
+├── README.md
+└── tests
+    ├── test_promptlib2.py
+    ├── test_promptlib.py
+    ├── test_promptlib_tui.py
+    └── ui
+        ├── promptlib_cli.py
+        ├── promptlib_interactive.py
+        └── promptlib_tui.py
+
+5 directories, 20 files
 
 ---
 

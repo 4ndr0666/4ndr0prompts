@@ -8,8 +8,8 @@ set -euo
 
 PYTHON_BIN="python3"
 SCRIPT_NAME="promptlib.py"
-DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/redteam-prompts"
-LOG_FILE="$DATA_HOME/promptlib.log"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/prompts.sh"
+LOG_FILE="$DATA_HOME/prompts_sh.log"
 mkdir -p "$DATA_HOME"
 
 # -----------
@@ -46,7 +46,7 @@ while [ "$#" -gt 0 ]; do
     key="$1"
     case "$key" in
         --tui)
-            TUI_MODE=1
+            TUI_MODE=0
             shift
             ;;
         --category)
@@ -136,7 +136,3 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
-
-
-
-
