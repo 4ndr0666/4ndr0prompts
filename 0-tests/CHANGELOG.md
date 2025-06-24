@@ -14,3 +14,5 @@
 
 
 
+- implement parse_rawdata.py with category heuristics and slot extraction; add tests
+
