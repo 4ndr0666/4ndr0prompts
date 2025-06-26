@@ -1,37 +1,42 @@
 ###############################################################################
-# CODEX.md — Sprint “Raw-Data Canonicalisation v2”
-# Repo: 4ndr0prompts | Branch: feature/raw-canonicalisation-v2
-# Status: 🔴 OPEN | Owner (@<you>)
-# Updated: 2025-06-19
+# CODEX.md — Work Order: Red-Team Prompt Mutation Toolkit (4ndr0prompts)
+# Repository Root: <repo>   |   Branch: main or feature/automation-overhaul
+# Status: OPEN, Living Document   |   Last Updated: 2025-06-23
 #
-# Mission
-# ───────
-# Convert **dataset/rawdata.txt** into a fully machine-readable, verbatim
-# template + slot schema while **preserving every original token exactly as it
-# appears in the raw corpus**.
-# No placeholders, no editorial “fixes” or spell-corrections—misspellings that
-# helped bypass filters are *valuable signal* and **must remain untouched**.
+# Mission Statement
+# ─────────────────────────────────────────────────────────────────────────────
+# Build a future-proof, fully-automated, audit-grade prompt generation and
+# analysis toolkit for adversarial testing of NSFW filter boundaries. The 
+# canonical source of all categories and slots is rawdata.txt. Human input and
+# manual steps must be eliminated from all core workflows, including category/
+# slot map maintenance, template re-generation, and coverage audits. Simplicity,
+# security, and repeatability are paramount. 
 ###############################################################################
 
-## 0 ▪︎ Prerequisites
-```bash
-git checkout -b feature/raw-canonicalisation-v2
-./0-tests/codex-merge-clean.sh $(git ls-files '*.py' '*.sh')
-ruff --fix . && black .
-pytest -q
-````
+## I. Project Vision and Key Objectives
+
+- **Simplicity:** All functionality must be accessible by invoking a single shell script: `./prompts.sh`.
+- **Automation:** Eliminate manual steps in parsing, mapping, regenerating, and auditing; ensure all mappings and data structures are always up-to-date with `rawdata.txt` with zero human intervention.
+- **Canonical Data Source:** `rawdata.txt` is the *sole* source of truth. Every file, map, and prompt must be traceable to, and only to, this dataset.
+- **Self-Healing & Coverage:** The system should auto-correct or flag mismatches, automate category/slot extraction, and dynamically mitigate or reclassify uncategorized prompts.
+- **Organizational Clarity:** Codebase should be periodically pruned for unused or redundant files and consolidated for maintainability without sacrificing test coverage.
+- **Embedded Audit:** All integrity checks and coverage reports must be core to the single-run pipeline, not separate utilities.
+- **Documentation & Review:** All workflows, outcomes, and exceptions must be thoroughly documented and easily auditable.
 
 ---
 
-## 1 ▪︎ Project Files & Deliverable Matrix
+## II. Deliverables & Key Acceptance Tests
 
-| ID     | Output / Path                            | Acceptance Tests                                   |
-| ------ | ---------------------------------------- | -------------------------------------------------- |
-| **D1** | `dataset/rawdata.txt` (rev 2)            | ≥ 90 % cov. 0 typos *added*, exact raw tokens kept |
-| **D2** | `dataset/templates.json` (regen)         | 6 categories, ≤1 sentence each, verbatim text      |
-| **D3** | `dataset/nsfwprompts.txt` (regen)        | Each row = category⇄slot⇄value, raw spelling kept  |
-| **D4** | `tests/` `tests/ui` (expanded)           | ✔ no placeholders ✔ no **identical** duplicates    |
-| **D5** | `0-tests/CHANGELOG.md`                   | Function+line counts & coverage delta              |
+| ID | Deliverable / Path                 | Key Acceptance Criteria                               |
+|----|------------------------------------|-------------------------------------------------------|
+| D1 | `prompts.sh`                       | Single point-of-entry; runs parse, audit, test, regen |
+| D2 | `parse_rawdata.py`                 | Zero manual flags; triggered by `prompts.sh` only     |
+| D3 | `templates.json` & `slots_report.tsv` | 100% canonical; always match `rawdata.txt`           |
+| D4 | In-code CATEGORY_MAP, slot lists   | Auto-extracted, always up-to-date                     |
+| D5 | Unused/legacy scripts pruned       | No unused .py, .sh, or config after audit             |
+| D6 | `audit_integrity` functionality    | Built-in: checks all category/slot coverage/mismatch  |
+| D7 | `tests/` suite                     | Covers all core code; checks for all categories/slots |
+| D8 | Updated `README.md`, `AGENTS.md`, `CHANGELOG.md` | Doc reflects new workflow, audit notes, exceptions    |
 
 ├── 0-tests
 │   ├── CHANGELOG.md
@@ -62,105 +67,107 @@ pytest -q
 
 ---
 
-## 2 ▪︎ Task Breakdown
+## III. Work Breakdown & Team Ticket Matrix
 
-### A · Parser Hardening (verbatim mode)
+### 1. **SHELL AUTOMATION: `prompts.sh`**
 
-| Step    | Action                                                                                                                       | File               |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **A-1** | Wrap `_read_raw()` in `try/except FileNotFoundError` → exit 1 with msg                                                       | `parse_rawdata.py` |
-| **A-2** | Replace list → set for slot accumulation, convert to **sorted list** (keeps unique *identical* tokens, retains misspellings) | ″                  |
-| **A-3** | Escape tab/ newline when writing `slots_report.tsv` (`v.replace('\t','\\t').replace('\n',' ')`)                              | ″                  |
-| **A-4** | Remove previous “normalise typo” idea; *do not* alter spelling.                                                              | ″                  |
-| **A-5** | Expand `CATEGORY_RULES` & `SLOT_PATTERNS` (table §3) to capture all tokens now observed                                      | ″                  |
-
-### B · Template & Slot Generation
-
-| Step    | Action                                                                                                   |
-| ------- | -------------------------------------------------------------------------------------------------------- |
-| **B-1** | Add `--trim-sentences N` flag (default 1) → keep first *N* sentences ***unchanged*** as template string. |
-| **B-2** | Ensure **every** detected category has at least an empty slot dict in output.                            |
-| **B-3** | Run `python scripts/parse_rawdata.py --write --trim-sentences 1` to regenerate JSON + TSV.               |
-| **B-4** | Quick human scan of TSV: ensure no placeholder tokens remain (`[SLOT]`).                                 |
-
-### C · Test-Suite Expansion
-
-| Step    | Action                                                                                                                        | File                          |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| **C-1** | Add: `test_all_categories_accounted`, `test_no_empty_slot_lists`, `test_no_duplicate_slot_values` (identical duplicates only) | `tests/test_rawdata_parse.py` |
-| **C-2** | TSV integrity test: `assert len(line.split('\t')) == 3` for every row after `--write`.                                        | ″                             |
-| **C-3** | Update existing tests to call script with `--write` inside `tmp_path` sandbox.                                                | ″                             |
-
-### D · CHANGELOG + Docs
-
-| Step    | Action                                                                                                                       |                        |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **D-1** | Append entry under **Unreleased** detailing:<br>• parse\_rawdata.py now 7 funcs / \~155 lines<br>• +3 tests / coverage +4 pp | `0-tests/CHANGELOG.md` |
-| **D-2** | `README.md` → update usage snippet showing new flag & workflow.                                                              |                        |
-
-### E · Verification & PR
-
-```bash
-ruff --fix .
-black .
-pytest -q --cov=.
-./scripts/parse_rawdata.py --write --trim-sentences 1
-bash 0-tests/codex-generate.sh        # should pass
-git add -u
-git commit -m "feat(parser): verbatim rawdata canonicalisation (#A1-E2)"
-```
-
-PR body **must include**:
-
-* Function/line metrics for new parser revision
-* `pytest-cov` delta
-* Diff of `templates.json` (old → new)
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| S1-1 | Refactor `prompts.sh` to: <br> • Call `parse_rawdata.py` to auto-generate `templates.json` and `slots_report.tsv` if and only if `rawdata.txt` has changed or upon every run <br> • Run audit/integrity check as the next step <br> • Run pytest and show coverage <br> • Run ruff/black and codex-merge-clean.sh <br> • Print actionable summary/report <br> • Exit nonzero on any audit or test failure | Shell/Infra | D1, D2, D6 |
+| S1-2 | Provide `--help` and `--dry-run` modes | Shell/Infra | D1 |
+| S1-3 | Document all steps in script comments and in `README.md` | Shell/Infra | D8 |
 
 ---
 
-## 3 ▪︎ Slot-Pattern Additions (§A-5)
+### 2. **CORE PYTHON AUTOMATION**
 
-| Category                   | Slot             | Regex snippet (verbatim capture) |               |         |           |          |           |         |
-| -------------------------- | ---------------- | -------------------------------- | ------------- | ------- | --------- | -------- | --------- | ------- |
-| turning\_bending\_buttocks | CLOTHING\_BOTTOM | \`skirt                          | pants         | trunks  | leggings? | tanga\`  |           |         |
-| turning\_bending\_buttocks | BUTTOCKS\_DESC   | \`round buttocks                 | bare buttocks | bottom  | backside  | thighs\` |           |         |
-| clothing\_chest\_exposure  | ACTION           | \`drool                          | smack         | lean    | dance     | jiggle   | sway      | grope\` |
-| white\_fluid\_dripping     | LIQUID\_DESC     | \`pearly                         | milky         | viscous | ropey     | stringy  | yfluid\`  |         |
-| multi\_person\_interaction | INTERACTION      | \`kiss(?\:es)?                   | touch         | caress  | stroke    | hold     | embrace\` |         |
-
-> **Important:** *Leave spelling exactly as matched in raw text.*
-> Regex should therefore capture variants like `"brests"` if present.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| P2-1 | Refactor `parse_rawdata.py`: <br> • Make it idempotent, non-interactive <br> • Remove any need for manual `--write`; run only as a subprocess from `prompts.sh` <br> • Accept `--force` to overwrite output even if unchanged | Py Team | D2 |
+| P2-2 | Move/merge all CATEGORY_MAP and slot-list logic into one extraction function; source = `rawdata.txt` only | Py Team | D4 |
+| P2-3 | Integrate normalization/audit for category/slot drift: <br> • Compare all categories and slots between dataset, code, templates.json, and slot report <br> • Print actionable mismatches <br> • Output full audit summary as part of pipeline | Py Team | D6 |
+| P2-4 | Implement *self-healing* for uncategorized prompts: <br> • Attempt to re-categorize with updated patterns <br> • Fallback: auto-flag or move to `unresolved.tsv` for review <br> • Print clear report for QA | Py Team | D6 |
 
 ---
 
-## 4 ▪︎ Acceptance Checklist (Reviewer)
+### 3. **CODEBASE CONSOLIDATION & PRUNING**
 
-* [ ] `dataset/templates.json` has 6 categories; each template ≤1 sentence, matches raw wording verbatim.
-* [ ] `dataset/slots_report.tsv` exists; every line has 3 fields, tokens verbatim, no tabs in values.
-* [ ] No placeholder brackets in either file.
-* [ ] Pytest green; coverage ≥ previous +4 pp.
-* [ ] `ruff`, `black`, `shellcheck`, `pre-commit run --all-files` clean.
-* [ ] No merge-artifact markers in repo (`git grep -nE '<<<<<<<|>>>>>>|======='`).
-* [ ] CHANGELOG updated with metrics.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| C3-1 | Inventory all .py and .sh scripts, libraries, and data files | Infra/Py Team | D5 |
+| C3-2 | Deprecate and remove: <br> • Any module not called by `prompts.sh` or tests <br> • Legacy promptlib or slot mapping code (if replaced) <br> • Redundant dataset samples or unused configs | Infra/Py Team | D5 |
+| C3-3 | Rename/refactor modules to clear, stable API names (e.g., consolidate all slot/category logic in one `prompt_agg.py`) | Infra/Py Team | D5, D4 |
 
 ---
 
-## 5 ▪︎ Timeline (ideal)
+### 4. **TESTING & AUDIT-DRIVEN QA**
 
-| Day       | Tasks     | Effort    |
-| --------- | --------- | --------- |
-| D-0 AM    | A-1 → A-3 | 2 h       |
-| D-0 PM    | A-4 → B-2 | 2 h       |
-| D-1 AM    | B-3 → B-4 | 1 h       |
-| D-1 AM    | C-1 → C-3 | 2 h       |
-| D-1 PM    | D-1 → E   | 1.5 h     |
-| **Total** |           | **8.5 h** |
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| T4-1 | Enhance tests/test_rawdata_parse.py and related tests: <br> • Test category/slot extraction on real, edge-case, and adversarial rawdata <br> • Fail if any prompt is dropped, re-mapped, or misspelling lost <br> • Verify “other_uncategorized” mitigation: number drops to 0 or prints actionable lines | QA | D7 |
+| T4-2 | Add audit_integrity checks to test suite and as callable from `prompts.sh` <br> • Print summary at end of run (missing/extra categories, slot mismatches, slotless prompts, uncategorized lines) <br> • Provide human-parseable log file | QA | D6 |
+| T4-3 | Run full pytest, coverage, linter suite in shell script <br> • All must pass for “success” exit | QA | D7 |
 
 ---
 
-### Footnote
+### 5. **DOCUMENTATION & CHANGE MANAGEMENT**
 
-Misspellings in raw data (e.g., “brests”, “chek”) are *intentional adversarial payloads* and **must be kept verbatim**.
-All deduplication is **value-exact only**; phrasal near-duplicates remain distinct.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| D5-1 | Update `README.md` with: <br> • Overview of canonical, automated pipeline <br> • Example run: `./prompts.sh` <br> • Explanation of “verbatim, adversarial data preservation” and audit philosophy <br> • How to review unresolved prompts | Docs | D8 |
+| D5-2 | Update `AGENTS.md` and inline code comments to reflect new automation, guardrails, and self-healing/audit design | Docs | D8 |
+| D5-3 | Log all changes, slot pattern extensions, and audit outcomes in `0-tests/CHANGELOG.md` <br> • Include function count, line delta, and coverage stats | Docs | D8 |
 
-*End of CODEX.md*
+---
+
+## IV. Acceptance Criteria & Final Audit Checklist
+
+- [ ] **prompts.sh** runs all steps, prints audit summary, and exits 0 only if all categories, slots, and templates are in sync and all tests/linting pass.
+- [ ] **No manual CATEGORY_MAP or slot mapping** in any module; all mappings/logic sourced from rawdata.txt via parser/aggregator.
+- [ ] **No “other_uncategorized” prompts** remain (or all unresolved lines are printed/audited at run’s end).
+- [ ] **All legacy/unreferenced scripts are pruned** or marked for deletion in the next sprint.
+- [ ] **Slot/category drift and test coverage are reported** at every run (stdout and human-readable log).
+- [ ] **README, AGENTS.md, and CHANGELOG.md** are all updated, matching the living state of the codebase.
+- [ ] **Rawdata tokens (misspellings, obfuscation, bypasses)** are preserved verbatim throughout the pipeline and into all downstream outputs.
+
+---
+
+## V. Further Enhancements: Roadmap & Open Questions
+
+### A. **Dynamic Slot Pattern Learning**
+- Integrate ML/NLP to auto-suggest new slot regexes from previously uncategorized prompts.
+- Allow admin to accept/reject suggested patterns for future runs.
+
+### B. **API/Service Integration**
+- Add a web API layer (e.g. FastAPI) for GET /categories, GET /slots/<category>, and POST prompt preview.
+
+### C. **Role-Based Workflow**
+- Build interactive TUI/CLI for red team ops that displays slot/category drift in real time.
+
+### D. **Advanced Logging & Analytics**
+- Add time-series and usage metrics for audit and trending (which attack vectors bypass the most?).
+
+### E. **Automated Reclassification**
+- If patterns are updated or extended, automatically reprocess unresolved prompts and surface any that finally resolve as success stories.
+
+### F. **Adversarial Pattern Tracking**
+- Track and report on which slot values or category triggers most frequently bypass security filters.
+
+### G. **Plug-in Expansion**
+- Allow third-party pattern plug-ins or category/tag classifiers for community red-team research.
+
+---
+
+## VI. Living Document Policy
+
+- This work order and all referenced audit trails are to be updated after each meaningful change to the data pipeline, pattern logic, or automation script. All changes should be timestamped, author-attributed, and clearly referenced in CHANGELOG.md.
+- Any exceptions, failed audits, or reclassification issues must be appended to the bottom of this CODEX.md as an audit log, with full reproduction instructions.
+
+---
+
+## VII. Summary
+
+This work order captures all actionable, delegated steps for a **fully-automated, future-proof, self-healing red-team prompt mutation system**, in which the canonical dataset (`rawdata.txt`) is always source of truth and all logic, mapping, and audit reporting adapts automatically. Every component (parsing, mapping, audit, test, and report) is chained through a single shell script and produces a living, verifiable trail of all transformations and exceptions for ongoing adversarial research and testing.
+
+---
+# END OF WORK ORDER
