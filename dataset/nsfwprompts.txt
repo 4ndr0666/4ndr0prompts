@@ -93,3 +93,4 @@
 1. The figure is a realistic, anatomically accurate human with proportional limbs and a well-aligned body. Every body part is naturally positioned, with smooth transitions between features. The face is properly aligned, with no extra or misplaced facial features. Hands and fingers are detailed, well-formed, and naturally attached to the wrists. The arms remain positioned away from the face throughout the entire scene, with no interaction between the hands and the head. The overall posture is natural and balanced. The scene is cohesive, consistent, and free of distortions.
 2. The hands do not touch or obscure the face at any point. Hands remain at the sides or in a neutral, non-obstructive position. There is no movement of hands towards the face. The face is always unobstructed and clearly visible.
 
+

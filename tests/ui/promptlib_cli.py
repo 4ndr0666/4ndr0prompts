@@ -5,10 +5,8 @@ promptlib_cli.py — Robust interactive CLI for promptlib.py using prompt_toolki
 - Requires: prompt_toolkit (pip install prompt_toolkit), promptlib.py in same dir.
 """
 
-import sys
 import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
+import sys
 import datetime
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import (
@@ -152,9 +150,9 @@ def main():
             ).run()
             continue
         # Preview dialog
-        preview = "\n".join([f"{i + 1}. {p}" for i, p in enumerate(prompts)])
+        preview = "\n".join([f"{i+1}. {p}" for i, p in enumerate(prompts)])
         if not yes_no_dialog(
-            title=f"Preview for '{cat}' ({idx + 1}/{len(selected)})",
+            title=f"Preview for '{cat}' ({idx+1}/{len(selected)})",
             text=f"{preview}\n\nSave these prompts?",
             style=style,
         ).run():
@@ -171,7 +169,7 @@ def main():
     message_dialog(
         title="PromptLib CLI Done",
         text=(
-            f"Prompt generation complete.\nAudit: {DEFAULT_LOG_DIR}/prompt_audit.log"
+            "Prompt generation complete.\nAudit: " f"{DEFAULT_LOG_DIR}/prompt_audit.log"
         ),
         style=style,
     ).run()
