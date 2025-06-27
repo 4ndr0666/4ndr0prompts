@@ -5,8 +5,10 @@ promptlib_cli.py — Robust interactive CLI for promptlib.py using prompt_toolki
 - Requires: prompt_toolkit (pip install prompt_toolkit), promptlib.py in same dir.
 """
 
-import os
 import sys
+import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import datetime
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import (

@@ -8,6 +8,8 @@ Run with ``--simple-cli`` for a minimal prompt generator when a full TUI is not 
 
 import sys
 import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import argparse
 import npyscreen
 import datetime
@@ -20,7 +22,7 @@ try:
     import promptlib
 except ImportError:
     npyscreen.wrapper_basic(
-        lambda: npyscreen.notify_confirm(
+        lambda *a, **k: npyscreen.notify_confirm(
             "Could not import promptlib.py in the current directory.",
             title="FATAL: ImportError",
             wide=True,
