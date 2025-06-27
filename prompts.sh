@@ -1,6 +1,6 @@
 #!/bin/sh
-# promptlib.sh - Production-ready shell wrapper for promptlib.py and pipeline
-set -euo pipefail
+# promptlib.sh - Production-ready shell wrapper for promptlib.py
+set -euo
 
 # -----------
 # CONFIGURATION
@@ -18,7 +18,7 @@ mkdir -p "$DATA_HOME"
 # -----------
 
 usage() {
-    printf 'Usage: %s [--cli --category <category> [--count N] [--output FILE]] [--pipeline] [--no-color] [--dry-run]\n' "$0"
+    printf 'Usage: %s [--cli --category <category> [--count N] [--output FILE]] [--no-color] [--dry-run]\n' "$0"
     printf '\n'
     printf '  --cli                    Run minimal CLI instead of default TUI\n'
     printf '  --category <category>    Category key for CLI mode\n'
@@ -26,7 +26,6 @@ usage() {
     printf '  --output FILE            Output file saved under %s\n' "$DATA_HOME"
     printf '  --no-color               Disable cyan output highlighting\n'
     printf '  --dry-run                Print command without executing\n'
-    printf '  --pipeline               Run full automation pipeline\n'
     printf '\n'
     printf 'Available categories:\n'
     "$PYTHON_BIN" "$TUI_SCRIPT" --simple-cli --list-categories
@@ -42,7 +41,6 @@ COUNT=5
 OUTPUT=""
 NO_COLOR=0
 DRY_RUN=0
-PIPELINE=0
 
 while [ "$#" -gt 0 ]; do
     key="$1"
@@ -71,10 +69,6 @@ while [ "$#" -gt 0 ]; do
             DRY_RUN=1
             shift
             ;;
-        --pipeline)
-            PIPELINE=1
-            shift
-            ;;
         -h|--help)
             usage
             exit 0
@@ -88,34 +82,8 @@ while [ "$#" -gt 0 ]; do
 done
 
 # -----------
-# PIPELINE FUNCTION
-# -----------
-
-run_pipeline() {
-    REPO_DIR="$(cd "$(dirname "$0")" && pwd)"
-    CMD="${PYTHON_BIN} ${REPO_DIR}/scripts/parse_rawdata.py --force"
-    AUDIT_CMD="${PYTHON_BIN} ${REPO_DIR}/scripts/parse_rawdata.py --audit"
-    if [ "$DRY_RUN" -eq 1 ]; then
-        printf '[DRY-RUN] %s && %s\n' "$CMD" "$AUDIT_CMD"
-    else
-        eval "$CMD"
-        eval "$AUDIT_CMD"
-    fi
-    FILES=$(git ls-files '*.py' '*.sh')
-    ./0-tests/codex-merge-clean.sh $FILES
-    ruff --fix .
-    black .
-    PYTHONPATH=. pytest -q
-}
-
-# -----------
 # MAIN LOGIC
 # -----------
-
-if [ "$PIPELINE" -eq 1 ]; then
-    run_pipeline
-    exit $?
-fi
 
 if [ "$CLI_MODE" -eq 0 ]; then
     set -- "$PYTHON_BIN" "$TUI_SCRIPT"
@@ -167,11 +135,3 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
-
-
-
-
-
-
-
-

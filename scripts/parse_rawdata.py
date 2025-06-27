@@ -8,10 +8,9 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Dict, Iterable, List, Tuple
+from typing import Dict, Iterable, List
 
 RAWDATA_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "rawdata.txt")
-DEFAULT_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "dataset")
 
 CATEGORY_RULES = {
     "turning_bending_buttocks": re.compile(r"buttocks|culo|rear", re.I),
@@ -52,18 +51,6 @@ def _read_raw(path: str) -> List[str]:
     except FileNotFoundError:
         print(f"File not found: {path}", file=sys.stderr)
         sys.exit(1)
-
-
-def needs_update(raw_path: str, output_dir: str) -> bool:
-    """Return True if outputs are missing or older than raw data."""
-    out_json = os.path.join(output_dir, "templates.json")
-    report = os.path.join(output_dir, "slots_report.tsv")
-    if not os.path.exists(out_json) or not os.path.exists(report):
-        return True
-    raw_mtime = os.path.getmtime(raw_path)
-    return raw_mtime > os.path.getmtime(out_json) or raw_mtime > os.path.getmtime(
-        report
-    )
 
 
 def _categorize(text: str) -> str:
@@ -122,43 +109,10 @@ def write_outputs(
                     fh.write(f"{cat}\t{slot}\t{val}\n")
 
 
-def audit_integrity(raw_path: str, output_dir: str) -> Tuple[bool, List[str]]:
-    """Return (is_ok, issues) comparing raw data to stored outputs."""
-    lines = _read_raw(raw_path)
-    expected_templates, expected_slots = parse_lines(lines)
-    out_json = os.path.join(output_dir, "templates.json")
-    try:
-        with open(out_json, "r", encoding="utf-8") as fh:
-            data = json.load(fh)
-    except FileNotFoundError:
-        return False, [f"Missing file: {out_json}"]
-    templates = data.get("templates", {})
-    slots = data.get("slots", {})
-    issues: List[str] = []
-    if set(templates) != set(expected_templates):
-        issues.append("Template category mismatch")
-    for cat, text in expected_templates.items():
-        if templates.get(cat) != text:
-            issues.append(f"Template mismatch: {cat}")
-    if set(slots) != set(expected_slots):
-        issues.append("Slot category mismatch")
-    for cat, slot_map in expected_slots.items():
-        stored_map = slots.get(cat, {})
-        for slot, vals in slot_map.items():
-            if sorted(stored_map.get(slot, [])) != vals:
-                issues.append(f"Slot mismatch: {cat}:{slot}")
-    return len(issues) == 0, issues
-
-
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Parse raw dataset")
     parser.add_argument(
-        "--force", action="store_true", help="Rewrite outputs even if up-to-date"
-    )
-    parser.add_argument(
-        "--audit",
-        action="store_true",
-        help="Verify outputs match raw data and report mismatches",
+        "--write", action="store_true", help="Write outputs to dataset directory"
     )
     parser.add_argument(
         "--trim-sentences",
@@ -166,27 +120,19 @@ def main(argv: List[str] | None = None) -> int:
         default=1,
         help="Number of sentences to keep for templates",
     )
-    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
+    parser.add_argument(
+        "--output-dir", default=os.path.join(os.path.dirname(__file__), "..", "dataset")
+    )
     args = parser.parse_args(argv)
 
     lines = _read_raw(RAWDATA_PATH)
     templates, slots = parse_lines(lines, args.trim_sentences)
-    if args.force or needs_update(RAWDATA_PATH, args.output_dir):
+    if args.write:
         write_outputs(templates, slots, args.output_dir)
-    if args.audit:
-        ok, issues = audit_integrity(RAWDATA_PATH, args.output_dir)
-        if not ok:
-            print("Audit failed", file=sys.stderr)
-            for issue in issues:
-                print(f" - {issue}", file=sys.stderr)
-            return 1
-        print("Audit passed")
     else:
-        if not (args.force or needs_update(RAWDATA_PATH, args.output_dir)):
-            print("Outputs up to date", file=sys.stderr)
+        print(json.dumps({"templates": templates, "slots": slots}, indent=2))
     return 0
 
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
