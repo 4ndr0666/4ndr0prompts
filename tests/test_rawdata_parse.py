@@ -27,3 +27,16 @@ def test_no_duplicate_slot_values():
     for cat, slot_map in slots.items():
         for values in slot_map.values():
             assert len(values) == len(set(values))
+
+
+def test_needs_update(tmp_path):
+    raw = tmp_path / "raw.txt"
+    raw.write_text("x")
+    assert parse_rawdata.needs_update(str(raw), str(tmp_path))
+    parse_rawdata.write_outputs({"a": "b"}, {"a": {}}, str(tmp_path))
+    assert not parse_rawdata.needs_update(str(raw), str(tmp_path))
+    import time
+
+    time.sleep(1)
+    raw.write_text("y")
+    assert parse_rawdata.needs_update(str(raw), str(tmp_path))
