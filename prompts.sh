@@ -1,6 +1,6 @@
 #!/bin/sh
 # promptlib.sh - Production-ready shell wrapper for promptlib.py and pipeline
-set -euo pipefail
+set -eu
 
 # -----------
 # CONFIGURATION
@@ -124,7 +124,7 @@ if [ "$CLI_MODE" -eq 0 ]; then
         printf '[DRY-RUN] %s\n' "$*"
         exit 0
     fi
-    "$@"
+    PYTHONPATH=. "$@"
     exit $?
 fi
 
@@ -146,7 +146,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
     exit 0
 fi
 
-"$@"
+PYTHONPATH=. "$@"
 STATUS=$?
 if [ "$STATUS" -eq 0 ]; then
     printf '[SUCCESS] Prompts generated for category %s.\n' "$CATEGORY"
@@ -165,9 +165,3 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
-
-
-
-
-
-

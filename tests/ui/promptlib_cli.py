@@ -17,7 +17,15 @@ from prompt_toolkit.shortcuts import (
 )
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
-from prompt_config import generate_prompt, load_config
+import importlib
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+prompt_config = importlib.import_module("prompt_config")
+generate_prompt = prompt_config.generate_prompt
+load_config = prompt_config.load_config
 
 DEFAULT_LOG_DIR = os.path.join(
     os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")),
@@ -181,3 +189,4 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\nAborted.")
         sys.exit(0)
+

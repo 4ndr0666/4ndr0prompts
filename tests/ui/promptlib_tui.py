@@ -11,7 +11,15 @@ import os
 import argparse
 import npyscreen
 import datetime
-from prompt_config import generate_prompt, load_config
+import importlib
+
+ROOT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+if ROOT_DIR not in sys.path:
+    sys.path.insert(0, ROOT_DIR)
+
+prompt_config = importlib.import_module("prompt_config")
+generate_prompt = prompt_config.generate_prompt
+load_config = prompt_config.load_config
 
 IS_TTY = sys.stdin.isatty() and sys.stdout.isatty()
 
@@ -311,3 +319,4 @@ if __name__ == "__main__":
         safe_cli_menu()
     else:
         PromptGenApp().run()
+
