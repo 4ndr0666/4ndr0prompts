@@ -11,6 +11,7 @@ from collections import defaultdict
 from typing import Dict, Iterable, List
 
 RAWDATA_PATH = os.path.join(os.path.dirname(__file__), "..", "dataset", "rawdata.txt")
+DEFAULT_OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "..", "dataset")
 
 CATEGORY_RULES = {
     "turning_bending_buttocks": re.compile(r"buttocks|culo|rear", re.I),
@@ -51,6 +52,18 @@ def _read_raw(path: str) -> List[str]:
     except FileNotFoundError:
         print(f"File not found: {path}", file=sys.stderr)
         sys.exit(1)
+
+
+def needs_update(raw_path: str, output_dir: str) -> bool:
+    """Return True if outputs are missing or older than raw data."""
+    out_json = os.path.join(output_dir, "templates.json")
+    report = os.path.join(output_dir, "slots_report.tsv")
+    if not os.path.exists(out_json) or not os.path.exists(report):
+        return True
+    raw_mtime = os.path.getmtime(raw_path)
+    return raw_mtime > os.path.getmtime(out_json) or raw_mtime > os.path.getmtime(
+        report
+    )
 
 
 def _categorize(text: str) -> str:
@@ -112,7 +125,7 @@ def write_outputs(
 def main(argv: List[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Parse raw dataset")
     parser.add_argument(
-        "--write", action="store_true", help="Write outputs to dataset directory"
+        "--force", action="store_true", help="Rewrite outputs even if up-to-date"
     )
     parser.add_argument(
         "--trim-sentences",
@@ -120,17 +133,15 @@ def main(argv: List[str] | None = None) -> int:
         default=1,
         help="Number of sentences to keep for templates",
     )
-    parser.add_argument(
-        "--output-dir", default=os.path.join(os.path.dirname(__file__), "..", "dataset")
-    )
+    parser.add_argument("--output-dir", default=DEFAULT_OUTPUT_DIR)
     args = parser.parse_args(argv)
 
     lines = _read_raw(RAWDATA_PATH)
     templates, slots = parse_lines(lines, args.trim_sentences)
-    if args.write:
+    if args.force or needs_update(RAWDATA_PATH, args.output_dir):
         write_outputs(templates, slots, args.output_dir)
     else:
-        print(json.dumps({"templates": templates, "slots": slots}, indent=2))
+        print("Outputs up to date", file=sys.stderr)
     return 0
 
 

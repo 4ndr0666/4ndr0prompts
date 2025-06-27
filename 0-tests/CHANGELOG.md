@@ -16,3 +16,9 @@
 
 - implement parse_rawdata.py with category heuristics and slot extraction; add tests
 
+- expand prompts.sh with automation pipeline (2 funcs, 169 lines)
+- add needs_update() to parse_rawdata.py (7 funcs, 147 lines)
+
+
+
+
