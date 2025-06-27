@@ -7,8 +7,7 @@ set -euo
 # -----------
 
 PYTHON_BIN="python3"
-TUI_SCRIPT="tests/ui/promptlib_tui.py"
-CLI_SCRIPT="promptlib.py"
+SCRIPT_NAME="promptlib.py"
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/prompts.sh"
 LOG_FILE="$DATA_HOME/prompts_sh.log"
 mkdir -p "$DATA_HOME"
@@ -18,24 +17,25 @@ mkdir -p "$DATA_HOME"
 # -----------
 
 usage() {
-    printf 'Usage: %s [--cli --category <category> [--count N] [--output FILE]] [--no-color] [--dry-run]\n' "$0"
+    printf 'Usage: %s --category <category> [--count N] [--output FILE] [--no-color] [--dry-run]\n' "$0"
+    printf '       %s --tui [--no-color] [--dry-run]\n' "$0"
     printf '\n'
-    printf '  --cli                    Run minimal CLI instead of default TUI\n'
-    printf '  --category <category>    Category key for CLI mode\n'
+    printf '  --category <category>    Category key (batch mode, e.g. clothing_chest_exposure)\n'
     printf '  --count N                Number of prompts to generate (default: 5)\n'
     printf '  --output FILE            Output file saved under %s\n' "$DATA_HOME"
     printf '  --no-color               Disable cyan output highlighting\n'
     printf '  --dry-run                Print command without executing\n'
+    printf '  --tui                    Run interactive TUI mode\n'
     printf '\n'
     printf 'Available categories:\n'
-    "$PYTHON_BIN" "$TUI_SCRIPT" --simple-cli --list-categories
+    "$PYTHON_BIN" "$SCRIPT_NAME" --list-categories
 }
 
 # -----------
 # ARGUMENT PARSING
 # -----------
 
-CLI_MODE=0
+TUI_MODE=0
 CATEGORY=""
 COUNT=5
 OUTPUT=""
@@ -45,8 +45,8 @@ DRY_RUN=0
 while [ "$#" -gt 0 ]; do
     key="$1"
     case "$key" in
-        --cli)
-            CLI_MODE=1
+        --tui)
+            TUI_MODE=0
             shift
             ;;
         --category)
@@ -85,8 +85,8 @@ done
 # MAIN LOGIC
 # -----------
 
-if [ "$CLI_MODE" -eq 0 ]; then
-    set -- "$PYTHON_BIN" "$TUI_SCRIPT"
+if [ "$TUI_MODE" -eq 1 ]; then
+    set -- "$PYTHON_BIN" "$SCRIPT_NAME" --tui
     if [ "$NO_COLOR" -eq 1 ]; then
         set -- "$@" --no-color
     fi
@@ -99,11 +99,12 @@ if [ "$CLI_MODE" -eq 0 ]; then
 fi
 
 if [ -z "$CATEGORY" ]; then
-    printf '[ERROR] --category is required with --cli\n'
+    printf '[ERROR] --category is required unless running --tui\n'
     usage
     exit 1
 fi
-set -- "$PYTHON_BIN" "$CLI_SCRIPT" --category "$CATEGORY" --count "$COUNT"
+
+set -- "$PYTHON_BIN" "$SCRIPT_NAME" --category "$CATEGORY" --count "$COUNT"
 if [ -n "$OUTPUT" ]; then
     set -- "$@" --output "$OUTPUT"
 fi
@@ -135,5 +136,4 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
-
 
