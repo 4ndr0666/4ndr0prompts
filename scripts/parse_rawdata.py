@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Parse raw dataset and generate templates and slot reports."""
-
 from __future__ import annotations
 
 import argparse

@@ -1,280 +1,174 @@
 ###############################################################################
-# CODEX.md — Full Production Work Order: Red-Team Prompt Mutation Framework
-# Project Codename: 4ndr0prompts
-# Version: v1.0.0
-# Last Updated: 2025-06-27
+# CODEX.md — Work Order: Red-Team Prompt Mutation Toolkit (4ndr0prompts)
+# Repository Root: <repo>   |   Branch: main or feature/automation-overhaul
+# Status: OPEN, Living Document   |   Last Updated: 2025-06-23
 #
-# This document defines a complete, cross-functional, team-executable
-# implementation roadmap for converting the 4ndr0prompts repository into a
-# fully-automated, reproducible, single-point UX system for adversarial
-# prompt generation and NSFW stress testing.
-#
-# Conforms to:
-# • XDG Base Dir Spec
-# • ShellCheck POSIX standards
-# • Python 3.10+, PEP 8 (ruff + black 88 cols)
+# Mission Statement
+# ─────────────────────────────────────────────────────────────────────────────
+# Build a future-proof, fully-automated, audit-grade prompt generation and
+# analysis toolkit for adversarial testing of NSFW filter boundaries. The
+# canonical source of all categories and slots is rawdata.txt. Human input and
+# manual steps must be eliminated from all core workflows, including category/
+# slot map maintenance, template re-generation, and coverage audits. Simplicity,
+# security, and repeatability are paramount.
 ###############################################################################
 
-## 📌 OVERVIEW: Final System Goals
+## I. Project Vision and Key Objectives
 
-| Objective ID | Goal Description                                                                      |
-|--------------|----------------------------------------------------------------------------------------|
-| G1           | Create a SINGLE-ENTRY POINT interface (`prompts.sh`) that controls parsing, loading, UX |
-| G2           | Eliminate ALL manual actions in category parsing and `templates.json` generation       |
-| G3           | Remove legacy interfaces (npyscreen, deprecated CLI switches)                          |
-| G4           | Align all slots/categories with `rawdata.txt` as the ONLY canonical source             |
-| G5           | Dynamically adapt promptlib2 via live CATEGORY_MAP loading from templates.json         |
-| G6           | Validate and fail safely when missing or malformed data is detected                    |
-| G7           | Enable easy test, logging, and reproducibility workflows for devs                      |
+- **Simplicity:** All functionality must be accessible by invoking a single shell script: `./prompts.sh`.
+- **Automation:** Eliminate manual steps in parsing, mapping, regenerating, and auditing; ensure all mappings and data structures are always up-to-date with `rawdata.txt` with zero human intervention.
+- **Canonical Data Source:** `rawdata.txt` is the *sole* source of truth. Every file, map, and prompt must be traceable to, and only to, this dataset.
+- **Self-Healing & Coverage:** The system should auto-correct or flag mismatches, automate category/slot extraction, and dynamically mitigate or reclassify uncategorized prompts.
+- **Organizational Clarity:** Codebase should be periodically pruned for unused or redundant files and consolidated for maintainability without sacrificing test coverage.
+- **Embedded Audit:** All integrity checks and coverage reports must be core to the single-run pipeline, not separate utilities.
+- **Documentation & Review:** All workflows, outcomes, and exceptions must be thoroughly documented and easily auditable.
 
 ---
 
-## 🧠 SYSTEM COMPONENTS & LAYERS
+## II. Deliverables & Key Acceptance Tests
 
-| Layer            | Role                                                       | File(s)                                  |
-|------------------|------------------------------------------------------------|------------------------------------------|
-| 🧪 Data           | Canonical raw prompts, templates, and slot mapping         | `rawdata.txt`, `templates.json`          |
-| 🧬 Parser         | Parses and generates slot/template JSON from raw text      | `scripts/parse_rawdata.py`               |
-| 🧩 Loader         | Loads template data, randomizes, validates integrity       | `prompt_config.py`                       |
-| 🧠 Generator      | Retrieves prompts by category from canonical sources       | `promptlib2.py`                          |
-| 🧰 CLI UX         | Interactive interface with `prompt_toolkit` only           | `promptlib_cli.py`                       |
-| 🚀 Entry Script   | Unified interface for automation, validation, UX           | `prompts.sh`                             |
-| ✅ Testing        | Unit and functional tests for all layers                   | `tests/*.py`, `test_promptlib2.py`, etc. |
-| 📊 Audit Tools    | Slot tracker, parse validation, logs, coverage reports     | `slots_report.tsv`, coverage tools       |
+| ID | Deliverable / Path                 | Key Acceptance Criteria                               |
+|----|------------------------------------|-------------------------------------------------------|
+| D1 | `prompts.sh`                       | Single point-of-entry; runs parse, audit, test, regen |
+| D2 | `parse_rawdata.py`                 | Zero manual flags; triggered by `prompts.sh` only     |
+| D3 | `templates.json` & `slots_report.tsv` | 100% canonical; always match `rawdata.txt`           |
+| D4 | In-code CATEGORY_MAP, slot lists   | Auto-extracted, always up-to-date                     |
+| D5 | Unused/legacy scripts pruned       | No unused .py, .sh, or config after audit             |
+| D6 | `audit_integrity` functionality    | Built-in: checks all category/slot coverage/mismatch  |
+| D7 | `tests/` suite                     | Covers all core code; checks for all categories/slots |
+| D8 | Updated `README.md`, `AGENTS.md`, `CHANGELOG.md` | Doc reflects new workflow, audit notes, exceptions    |
 
----
+├── 0-tests
+│   ├── CHANGELOG.md
+│   ├── codex-generate.sh
+│   └── codex-merge-clean.sh
+├── AGENTS.md
+├── CODEX.md
+├── dataset
+│   ├── nsfwprompts.txt
+│   ├── rawdata.txt
+│   └── templates.json
+├── prompt_config.py
+├── promptlib2.py
+├── promptlib.py
+├── prompts.sh
+├── pyproject.toml
+├── README.md
+└── tests
+    ├── test_promptlib2.py
+    ├── test_promptlib.py
+    ├── test_promptlib_tui.py
+    └── ui
+        ├── promptlib_cli.py
+        ├── promptlib_interactive.py
+        └── promptlib_tui.py
 
-## 🛠️ ENGINEERING TASKS — PRIMARY IMPLEMENTATION
-
-Each task is written for execution by a dedicated engineer or functional subteam.
-
----
-
-### 🔧 TASK A — CLI Unification (UX Layer Owner)
-
-**Owner:** UI Team  
-**Status:** ✅ Done (needs validation)  
-**Files:**
-- `promptlib_cli.py`
-- `prompts.sh`
-
-**Steps:**
-1. Remove all references to `--interactive`, `--cli`, `--tui`.
-2. Delete deprecated files: `promptlib_tui.py`, `promptlib_interactive.py`, `promptlib_config.py`.
-3. The only accepted interface is `prompt_toolkit`-based CLI.
-4. Ensure `prompts.sh` launches it directly:
-   ```bash
-   python -m promptlib_cli
-````
-
-**Exit Criteria:**
-
-* Launching `./prompts.sh` launches the CLI with prompt\_toolkit.
-* No legacy interface artifacts are present.
+5 directories, 20 files
 
 ---
 
-### 🔁 TASK B — Slot and Template Auto-Refresh
+## III. Work Breakdown & Team Ticket Matrix
 
-**Owner:** Infrastructure / Backend
-**Files:**
+### 1. **SHELL AUTOMATION: `prompts.sh`**
 
-* `scripts/parse_rawdata.py`
-* `dataset/rawdata.txt`
-* `dataset/templates.json`
-* `dataset/slots_report.tsv`
-
-**Steps:**
-
-1. Add a pre-launch hook to `prompts.sh` to auto-run:
-
-   ```bash
-   python scripts/parse_rawdata.py --write
-   ```
-2. Validate that it creates:
-
-   * Updated `templates.json` (canonical slot/template structure)
-   * Refreshed `slots_report.tsv` (audit)
-3. Insert audit logging:
-
-   * `log: dataset parsed @ timestamp`
-   * If `templates.json` missing or malformed, fail safely.
-
-**Exit Criteria:**
-
-* Running `prompts.sh` always produces fresh slot/template data.
-* Manual runs of `parse_rawdata.py` are unnecessary for users.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| S1-1 | Refactor `prompts.sh` to: <br> • Call `parse_rawdata.py` to auto-generate `templates.json` and `slots_report.tsv` if and only if `rawdata.txt` has changed or upon every run <br> • Run audit/integrity check as the next step <br> • Run pytest and show coverage <br> • Run ruff/black and codex-merge-clean.sh <br> • Print actionable summary/report <br> • Exit nonzero on any audit or test failure | Shell/Infra | D1, D2, D6 |
+| S1-2 | Provide `--help` and `--dry-run` modes | Shell/Infra | D1 |
+| S1-3 | Document all steps in script comments and in `README.md` | Shell/Infra | D8 |
 
 ---
 
-### 🔬 TASK C — Live Dynamic CATEGORY\_MAP
+### 2. **CORE PYTHON AUTOMATION**
 
-**Owner:** promptlib2 Dev Team
-**Files:**
-
-* `promptlib2.py`
-* `prompt_config.py`
-
-**Steps:**
-
-1. Refactor `CATEGORY_MAP` in `promptlib2.py` to load from `prompt_config.load_config()["templates"].keys()`
-2. Ensure this is always current with `templates.json` and has no hardcoded list.
-3. Fallback: if loading fails, raise a fatal exception with helpful message:
-
-   ```python
-   raise RuntimeError("No valid category map found in templates.json")
-   ```
-
-**Exit Criteria:**
-
-* `promptlib2.py` dynamically adapts to new categories automatically.
-* Category list is always aligned with the dataset, no human touch required.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| P2-1 | Refactor `parse_rawdata.py`: <br> • Make it idempotent, non-interactive <br> • Remove any need for manual `--write`; run only as a subprocess from `prompts.sh` <br> • Accept `--force` to overwrite output even if unchanged | Py Team | D2 |
+| P2-2 | Move/merge all CATEGORY_MAP and slot-list logic into one extraction function; source = `rawdata.txt` only | Py Team | D4 |
+| P2-3 | Integrate normalization/audit for category/slot drift: <br> • Compare all categories and slots between dataset, code, templates.json, and slot report <br> • Print actionable mismatches <br> • Output full audit summary as part of pipeline | Py Team | D6 |
+| P2-4 | Implement *self-healing* for uncategorized prompts: <br> • Attempt to re-categorize with updated patterns <br> • Fallback: auto-flag or move to `unresolved.tsv` for review <br> • Print clear report for QA | Py Team | D6 |
 
 ---
 
-### 🚨 TASK D — Data Guardrails and Sanitization
+### 3. **CODEBASE CONSOLIDATION & PRUNING**
 
-**Owner:** Parser Team
-**Files:**
-
-* `scripts/parse_rawdata.py`
-
-**Steps:**
-
-1. Audit all default `category = "other_uncategorized"` assignments.
-2. Add regex match-strength heuristic:
-
-   * If >= 2 slot matches, assign best match.
-   * Else: quarantine in `dataset/unassigned.tsv`
-3. Warn when > 5% of prompts fall into `other_uncategorized`.
-
-**Exit Criteria:**
-
-* All prompts from rawdata are either classified or exported to unassigned.tsv.
-* No prompt silently lands in undefined category.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| C3-1 | Inventory all .py and .sh scripts, libraries, and data files | Infra/Py Team | D5 |
+| C3-2 | Deprecate and remove: <br> • Any module not called by `prompts.sh` or tests <br> • Legacy promptlib or slot mapping code (if replaced) <br> • Redundant dataset samples or unused configs | Infra/Py Team | D5 |
+| C3-3 | Rename/refactor modules to clear, stable API names (e.g., consolidate all slot/category logic in one `prompt_agg.py`) | Infra/Py Team | D5, D4 |
 
 ---
 
-### 🔍 TASK E — One-Shot Validation & Self-Healing
+### 4. **TESTING & AUDIT-DRIVEN QA**
 
-**Owner:** CLI & QA Team
-**Files:**
-
-* `prompt_config.py`
-* `promptlib_cli.py`
-* `prompts.sh`
-
-**Steps:**
-
-1. Add logic to fail gracefully if:
-
-   * A slot referenced in template is not defined in `slots`
-   * A category is empty or malformed
-2. If mismatch found:
-
-   * Log error to `var/error_log.txt`
-   * Offer to regenerate from rawdata automatically
-3. Insert `test_promptlib2.py` unit tests for slot presence:
-
-   ```python
-   assert slot in config["slots"][cat]
-   ```
-
-**Exit Criteria:**
-
-* CLI never fails silently.
-* Slot integrity is always ensured on runtime.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| T4-1 | Enhance tests/test_rawdata_parse.py and related tests: <br> • Test category/slot extraction on real, edge-case, and adversarial rawdata <br> • Fail if any prompt is dropped, re-mapped, or misspelling lost <br> • Verify “other_uncategorized” mitigation: number drops to 0 or prints actionable lines | QA | D7 |
+| T4-2 | Add audit_integrity checks to test suite and as callable from `prompts.sh` <br> • Print summary at end of run (missing/extra categories, slot mismatches, slotless prompts, uncategorized lines) <br> • Provide human-parseable log file | QA | D6 |
+| T4-3 | Run full pytest, coverage, linter suite in shell script <br> • All must pass for “success” exit | QA | D7 |
 
 ---
 
-### 🧪 TASK F — Codebase Simplification & Cleanup
+### 5. **DOCUMENTATION & CHANGE MANAGEMENT**
 
-**Owner:** Tech Lead / Generalist
-**Files:**
-
-* `promptlib.py` (if deprecated)
-* `promptlib2.py`
-* `tests/`
-
-**Steps:**
-
-1. Confirm whether `promptlib.py` is still needed. If it’s fully duplicated by `promptlib2.py`, deprecate.
-2. Consolidate duplicate imports across files.
-3. Reorganize any test file under `tests/ui/` or `tests/core/` for clarity.
-
-**Exit Criteria:**
-
-* Only a single primary generator module remains.
-* Folder structure is aligned to AGENTS.md.
+| Task | Action | Owner | Ref. |
+|------|--------|-------|------|
+| D5-1 | Update `README.md` with: <br> • Overview of canonical, automated pipeline <br> • Example run: `./prompts.sh` <br> • Explanation of “verbatim, adversarial data preservation” and audit philosophy <br> • How to review unresolved prompts | Docs | D8 |
+| D5-2 | Update `AGENTS.md` and inline code comments to reflect new automation, guardrails, and self-healing/audit design | Docs | D8 |
+| D5-3 | Log all changes, slot pattern extensions, and audit outcomes in `0-tests/CHANGELOG.md` <br> • Include function count, line delta, and coverage stats | Docs | D8 |
 
 ---
 
-## 🔒 TESTING REQUIREMENTS
+## IV. Acceptance Criteria & Final Audit Checklist
 
-| Test Type         | Tool       | Source File                   |
-| ----------------- | ---------- | ----------------------------- |
-| Unit Test         | `pytest`   | `tests/test_promptlib2.py`    |
-| Slot Completeness | `pytest`   | `tests/test_rawdata_parse.py` |
-| UX Launch         | shellcheck | `prompts.sh`                  |
-| TTY Sanity        | `test -t`  | prompts.sh                    |
-| Slot Regression   | `diff`     | slots\_report.tsv             |
-
----
-
-## 📈 CI/CD & LINT
-
-```bash
-# lint
-$ ruff --fix .
-$ black .
-
-# unit tests
-$ PYTHONPATH=. pytest -q
-
-# pre-commit
-$ pre-commit run --all-files
-```
-
-> All commits must pass this minimum hygiene, or the PR is rejected.
+- [ ] **prompts.sh** runs all steps, prints audit summary, and exits 0 only if all categories, slots, and templates are in sync and all tests/linting pass.
+- [ ] **No manual CATEGORY_MAP or slot mapping** in any module; all mappings/logic sourced from rawdata.txt via parser/aggregator.
+- [ ] **No “other_uncategorized” prompts** remain (or all unresolved lines are printed/audited at run’s end).
+- [ ] **All legacy/unreferenced scripts are pruned** or marked for deletion in the next sprint.
+- [ ] **Slot/category drift and test coverage are reported** at every run (stdout and human-readable log).
+- [ ] **README, AGENTS.md, and CHANGELOG.md** are all updated, matching the living state of the codebase.
+- [ ] **Rawdata tokens (misspellings, obfuscation, bypasses)** are preserved verbatim throughout the pipeline and into all downstream outputs.
 
 ---
 
-## ✅ ACCEPTANCE RUBRIC (REQUIRED TO MERGE)
+## V. Further Enhancements: Roadmap & Open Questions
 
-| Requirement                             | Description                                                    |
-| --------------------------------------- | -------------------------------------------------------------- |
-| 🔄 All prompts derived from rawdata.txt | templates.json and slots are machine-generated                 |
-| ✅ One CLI-only UX entry                 | Only prompt\_toolkit CLI is usable                             |
-| 🔁 No hardcoded CATEGORY\_MAP           | All categories are live-loaded                                 |
-| 🧼 No deprecated codepaths              | TUI, CLI switches removed                                      |
-| 🧪 Tests all pass on dry run            | `pytest -q` green                                              |
-| 📦 Dataset reproducibility              | `parse_rawdata.py --write` produces identical output each time |
-| 📄 AGENTS.md aligned                    | Directory + UX + dev patterns match AGENTS.md summary          |
-| 📊 Logging enabled                      | Errors, generation, and slot drift logs are saved to `var/`    |
+### A. **Dynamic Slot Pattern Learning**
+- Integrate ML/NLP to auto-suggest new slot regexes from previously uncategorized prompts.
+- Allow admin to accept/reject suggested patterns for future runs.
+
+### B. **API/Service Integration**
+- Add a web API layer (e.g. FastAPI) for GET /categories, GET /slots/<category>, and POST prompt preview.
+
+### C. **Role-Based Workflow**
+- Build interactive TUI/CLI for red team ops that displays slot/category drift in real time.
+
+### D. **Advanced Logging & Analytics**
+- Add time-series and usage metrics for audit and trending (which attack vectors bypass the most?).
+
+### E. **Automated Reclassification**
+- If patterns are updated or extended, automatically reprocess unresolved prompts and surface any that finally resolve as success stories.
+
+### F. **Adversarial Pattern Tracking**
+- Track and report on which slot values or category triggers most frequently bypass security filters.
+
+### G. **Plug-in Expansion**
+- Allow third-party pattern plug-ins or category/tag classifiers for community red-team research.
 
 ---
 
-## 🧭 FUTURE ROADMAP
+## VI. Living Document Policy
 
-### 🔐 1. Prompt Signature Validation
+- This work order and all referenced audit trails are to be updated after each meaningful change to the data pipeline, pattern logic, or automation script. All changes should be timestamped, author-attributed, and clearly referenced in CHANGELOG.md.
+- Any exceptions, failed audits, or reclassification issues must be appended to the bottom of this CODEX.md as an audit log, with full reproduction instructions.
 
-* SHA256 hash every generated prompt
-* Verify against known banned mutations
-* Store logs under `var/audit_logs/YYYY-MM-DD-*.json`
+---
 
-### 🧩 2. Prompt Plugin Interface
+## VII. Summary
 
-* Allow Markdown plugins to inject categories/slots
+This work order captures all actionable, delegated steps for a **fully-automated, future-proof, self-healing red-team prompt mutation system**, in which the canonical dataset (`rawdata.txt`) is always source of truth and all logic, mapping, and audit reporting adapts automatically. Every component (parsing, mapping, audit, test, and report) is chained through a single shell script and produces a living, verifiable trail of all transformations and exceptions for ongoing adversarial research and testing.
 
-### 📊 3. Dataset Dashboard
+---
+# END OF WORK ORDER
 
-* Use `streamlit` to display category use frequency, slot collisions, coverage gaps
-
-### 🧠 4. AI-Aided Categorizer
-
-* Use fine-tuned GPT to auto-label uncategorized prompts
-
-### 📦 5. Docker Package
-
-* Package everything into CLI-only container
-* Mount rawdata + output directory

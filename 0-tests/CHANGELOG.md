@@ -22,3 +22,8 @@
 
 
 
+
+- fix PYTHONPATH handling for CLI/TUI and add conftest for tests
+
+- resolve ruff E402 by dynamic import in test UIs
+
