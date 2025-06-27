@@ -27,13 +27,17 @@ Run all checks manually with:
 pre-commit run --all-files
 ```
 
-To regenerate the template dataset in verbatim mode:
+Use `./prompts.sh --pipeline` to parse `rawdata.txt`, audit the outputs, lint the
+repository, and run all tests automatically.
 
-```bash
-PYTHONPATH=. python scripts/parse_rawdata.py --write --trim-sentences 1
-```
+`prompts.sh` launches the TUI by default. Use `--cli` for a minimal CLI mode or
+`--pipeline` for the automated pipeline with integrity checks.
 
-`prompts.sh` launches the TUI by default. Use `--cli` to run the minimal CLI mode.
+
+
+
+
+
 
 
 
