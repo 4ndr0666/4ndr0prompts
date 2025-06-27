@@ -150,9 +150,9 @@ def main():
             ).run()
             continue
         # Preview dialog
-        preview = "\n".join([f"{i+1}. {p}" for i, p in enumerate(prompts)])
+        preview = "\n".join([f"{i + 1}. {p}" for i, p in enumerate(prompts)])
         if not yes_no_dialog(
-            title=f"Preview for '{cat}' ({idx+1}/{len(selected)})",
+            title=f"Preview for '{cat}' ({idx + 1}/{len(selected)})",
             text=f"{preview}\n\nSave these prompts?",
             style=style,
         ).run():
@@ -169,7 +169,7 @@ def main():
     message_dialog(
         title="PromptLib CLI Done",
         text=(
-            "Prompt generation complete.\nAudit: " f"{DEFAULT_LOG_DIR}/prompt_audit.log"
+            f"Prompt generation complete.\nAudit: {DEFAULT_LOG_DIR}/prompt_audit.log"
         ),
         style=style,
     ).run()
