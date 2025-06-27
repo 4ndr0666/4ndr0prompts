@@ -11,3 +11,5 @@
 - expand parse_rawdata.py to 7 funcs (~155 lines) with --trim-sentences flag and
 - slot-report escaping; add 3 tests; coverage +4 pp
 - implement parse_rawdata.py with category heuristics and slot extraction; add tests
+- revert audit pipeline features; restore simple prompts.sh (137 lines) and parse_rawdata.py (6 funcs, 138 lines)
+
