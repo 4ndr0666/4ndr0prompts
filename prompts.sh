@@ -1,6 +1,6 @@
 #!/bin/sh
 # promptlib.sh - Production-ready shell wrapper for promptlib.py and pipeline
-set -euo
+set -euo pipefail
 
 # -----------
 # CONFIGURATION
@@ -165,6 +165,7 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
+
 
 
 

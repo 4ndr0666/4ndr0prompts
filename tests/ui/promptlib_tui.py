@@ -8,8 +8,6 @@ Run with ``--simple-cli`` for a minimal prompt generator when a full TUI is not 
 
 import sys
 import os
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 import argparse
 import npyscreen
 import datetime
@@ -22,7 +20,7 @@ try:
     import promptlib
 except ImportError:
     npyscreen.wrapper_basic(
-        lambda *a, **k: npyscreen.notify_confirm(
+        lambda: npyscreen.notify_confirm(
             "Could not import promptlib.py in the current directory.",
             title="FATAL: ImportError",
             wide=True,
@@ -182,7 +180,7 @@ class PromptPreviewForm(npyscreen.ActionForm):
         self.category_idx = getattr(self, "category_idx", 0)
         self.cur_category = cats[self.category_idx]
         self.title.value = (
-            f"Category: {self.cur_category} ({self.category_idx + 1} of {len(cats)})"
+            f"Category: {self.cur_category} ({self.category_idx+1} of {len(cats)})"
         )
         # Generate prompts for preview
         try:
@@ -197,7 +195,7 @@ class PromptPreviewForm(npyscreen.ActionForm):
             self.prompts = [f"[ERROR] {e}"]
         # Show preview
         self.preview_box.values = [
-            f"{idx + 1}. {p}" for idx, p in enumerate(self.prompts)
+            f"{idx+1}. {p}" for idx, p in enumerate(self.prompts)
         ]
 
     def on_ok(self):
@@ -270,7 +268,7 @@ def safe_cli_menu():
     cats = list(promptlib.TEMPLATES.keys())
     print("Choose a category:")
     for idx, cat in enumerate(cats):
-        print(f"{idx + 1}. {cat}")
+        print(f"{idx+1}. {cat}")
     while True:
         try:
             i = int(input("Enter number: ")) - 1
