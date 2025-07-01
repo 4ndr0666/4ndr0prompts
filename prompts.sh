@@ -1,5 +1,5 @@
 #!/bin/sh
-# promptlib.sh - Production-ready shell wrapper for promptlib.py and pipeline
+# promptlib.sh - Production-ready shell wrapper for promptlib.py
 set -eu
 
 # -----------
@@ -9,6 +9,7 @@ set -eu
 PYTHON_BIN="python3"
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 UI_SCRIPT="$SCRIPT_DIR/promptlib.py"
+
 DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/prompts.sh"
 LOG_FILE="$DATA_HOME/prompts_sh.log"
 mkdir -p "$DATA_HOME"
@@ -81,6 +82,7 @@ done
 
 RAW_DATA="$SCRIPT_DIR/dataset/rawdata.txt"
 OUTPUT_DIR="$SCRIPT_DIR/dataset"
+
 NEED_UPDATE="$($PYTHON_BIN - <<EOF
 from scripts import parse_rawdata as p
 print("yes" if p.needs_update("$RAW_DATA", "$OUTPUT_DIR") else "no")
@@ -133,4 +135,3 @@ else
         printf '%s [ERROR] exit=%s\n' "$(date -Is)" "$STATUS" >>"$LOG_FILE"
     fi
 fi
-

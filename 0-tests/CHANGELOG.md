@@ -15,3 +15,5 @@
 - add needs_update() to parse_rawdata.py (7 funcs, 147 lines)
 - fix PYTHONPATH handling for CLI/TUI and add conftest for tests
 - resolve ruff E402 by dynamic import in test UIs
+- refactor prompts.sh with self-healing dataset update and standardized log path
+
