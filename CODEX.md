@@ -1,139 +1,286 @@
-###############################################################################
-# CODEX.md — Sprint “Raw-Data Canonicalisation v2”
-# Repo: 4ndr0prompts | Branch: feature/raw-canonicalisation-v2
-# Status: 🔴 OPEN | Owner (@<you>)
-# Updated: 2025-06-19
-#
-# Mission
-# ───────
-# Convert **dataset/rawdata.txt** into a fully machine-readable, verbatim
-# template + slot schema while **preserving every original token exactly as it
-# appears in the raw corpus**.  
-# No placeholders, no editorial “fixes” or spell-corrections—misspellings that
-# helped bypass filters are *valuable signal* and **must remain untouched**.
-###############################################################################
+# CODEX.md
 
-## 0 ▪︎ Prerequisites
-```bash
-git checkout -b feature/raw-canonicalisation-v2
-./0-tests/codex-merge-clean.sh $(git ls-files '*.py' '*.sh')
-ruff --fix . && black .
-pytest -q
-````
+*Canonical Work Order and Execution Plan: Red-Team Prompt Mutation Toolkit*
 
 ---
 
-## 1 ▪︎ Deliverable Matrix
+## 0. Mission Statement
 
-| ID     | Output / Path                            | Acceptance Tests                                   |
-| ------ | ---------------------------------------- | -------------------------------------------------- |
-| **D1** | `scripts/parse_rawdata.py` (rev 2)       | ≥ 90 % cov. 0 typos *added*, exact raw tokens kept |
-| **D2** | `dataset/templates.json` (regen)         | 6 categories, ≤1 sentence each, verbatim text      |
-| **D3** | `dataset/slots_report.tsv` (regen)       | Each row = category⇄slot⇄value, raw spelling kept  |
-| **D4** | `tests/test_rawdata_parse.py` (expanded) | ✔ no placeholders ✔ no **identical** duplicates    |
-| **D5** | `0-tests/CHANGELOG.md`                   | Function+line counts & coverage delta              |
+This sprint delivers a fully agentic, monolithic, high-performance prompt mutation toolkit with **verbatim, dataset-driven adversarial prompt generation**.
+All UI/UX logic and styling are centralized, using **prompt\_toolkit** for CLI. The entrypoint is `prompts.sh` (which auto-installs dependencies as needed), and all menu/category/slot logic is dynamic, driven by canonical data.
+**No extraneous files or I/O** are permitted for UI or style sharing.
+All deliverables are actionable and cross-referenced for team members.
 
 ---
 
-## 2 ▪︎ Task Breakdown
+## 1. Team Roles & RACI
 
-### A · Parser Hardening (verbatim mode)
+| Role/Task          | Dev | QA | UX | Ops | Lead |
+| ------------------ | --- | -- | -- | --- | ---- |
+| CLI refactor       | X   |    | X  |     |      |
+| prompt\_toolkit UX |     |    | X  |     |      |
+| Data pipeline      | X   | X  |    |     |      |
+| Automation & infra |     |    |    | X   |      |
+| Code review/audit  | X   | X  | X  | X   | X    |
+| Docs               | X   |    |    |     | X    |
+| Roadmap/future     |     |    |    |     | X    |
 
-| Step    | Action                                                                                                                       | File               |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------ |
-| **A-1** | Wrap `_read_raw()` in `try/except FileNotFoundError` → exit 1 with msg                                                       | `parse_rawdata.py` |
-| **A-2** | Replace list → set for slot accumulation, convert to **sorted list** (keeps unique *identical* tokens, retains misspellings) | ″                  |
-| **A-3** | Escape tab/ newline when writing `slots_report.tsv` (`v.replace('\t','\\t').replace('\n',' ')`)                              | ″                  |
-| **A-4** | Remove previous “normalise typo” idea; *do not* alter spelling.                                                              | ″                  |
-| **A-5** | Expand `CATEGORY_RULES` & `SLOT_PATTERNS` (table §3) to capture all tokens now observed                                      | ″                  |
+---
 
-### B · Template & Slot Generation
+## 2. Deliverable Matrix
 
-| Step    | Action                                                                                                   |
-| ------- | -------------------------------------------------------------------------------------------------------- |
-| **B-1** | Add `--trim-sentences N` flag (default 1) → keep first *N* sentences ***unchanged*** as template string. |
-| **B-2** | Ensure **every** detected category has at least an empty slot dict in output.                            |
-| **B-3** | Run `python scripts/parse_rawdata.py --write --trim-sentences 1` to regenerate JSON + TSV.               |
-| **B-4** | Quick human scan of TSV: ensure no placeholder tokens remain (`[SLOT]`).                                 |
+| ID  | Deliverable/Path                | Owner | Key Acceptance Tests/Criteria                          |
+| --- | ------------------------------- | ----- | ------------------------------------------------------ |
+| D1  | `promptlib_cli.py` (monolithic) | Dev   | All logic centralized, no imports for style/logic      |
+| D2  | `prompts.sh` (entrypoint)       | Dev   | Auto-installs prompt\_toolkit if missing, launches CLI |
+| D3  | `dataset/templates.json`        | Dev   | All categories/slots loaded dynamically                |
+| D4  | Category/Slot utility           | Dev   | Unified function suite, all menu input calls it        |
+| D5  | Centralized color/style block   | Dev   | All dialogs share one style dict, no external files    |
+| D6  | Dynamic, fuzzy, live menus      | Dev   | Menus auto-update on dataset changes                   |
+| D7  | "Regenerate prompt" feature     | Dev   | CLI can reshuffle, show prev/next                      |
+| D8  | Sample slot preview in menus    | UX    | User sees examples before picking                      |
+| D9  | Robust error handling           | QA    | Any missing category/slot triggers colored error       |
+| D10 | Tests for CLI & dataset logic   | QA    | 100% menu path coverage, dataset changes tested        |
+| D11 | README usage & workflow         | Dev   | Describes entry, auto-install, dynamic logic           |
+| D12 | Automation/infra scripts        | Ops   | Pre-commit, lint, test, no fallback modes              |
 
-### C · Test-Suite Expansion
+---
 
-| Step    | Action                                                                                                                        | File                          |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------- |
-| **C-1** | Add: `test_all_categories_accounted`, `test_no_empty_slot_lists`, `test_no_duplicate_slot_values` (identical duplicates only) | `tests/test_rawdata_parse.py` |
-| **C-2** | TSV integrity test: `assert len(line.split('\t')) == 3` for every row after `--write`.                                        | ″                             |
-| **C-3** | Update existing tests to call script with `--write` inside `tmp_path` sandbox.                                                | ″                             |
+## 3. Task Breakdown & Technical Explanation
 
-### D · CHANGELOG + Docs
+### **A. CLI Refactor & Monolithic Design**
 
-| Step    | Action                                                                                                                       |                        |
-| ------- | ---------------------------------------------------------------------------------------------------------------------------- | ---------------------- |
-| **D-1** | Append entry under **Unreleased** detailing:<br>• parse\_rawdata.py now 7 funcs / \~155 lines<br>• +3 tests / coverage +4 pp | `0-tests/CHANGELOG.md` |
-| **D-2** | `README.md` → update usage snippet showing new flag & workflow.                                                              |                        |
+#### **A.1. Centralize All UI/UX Logic**
 
-### E · Verification & PR
+* Refactor `promptlib_cli.py` to encapsulate:
 
-```bash
-ruff --fix .
-black .
-pytest -q --cov=.
-./scripts/parse_rawdata.py --write --trim-sentences 1
-bash 0-tests/codex-generate.sh        # should pass
-git add -u
-git commit -m "feat(parser): verbatim rawdata canonicalisation (#A1-E2)"
+  * All menu, dialog, and prompt flows
+  * All prompt\_toolkit logic (input, color, completion)
+  * Category/slot dataset handling, fuzzy search, and preview
+* **No imports** for UI/UX, style, or dataset logic from outside files
+* Example:
+
+  ```python
+  # At top of promptlib_cli.py
+  COLOR_STYLE = {
+      "dialog": "bg:#212121 #ffffff",
+      "button": "bg:#003366 #ffcc00 bold",
+      "error": "bg:#ff0033 #ffffff bold"
+      # ...
+  }
+  ```
+
+#### **A.2. Shared Category/Slot Utility**
+
+* All category/slot retrieval, validation, and selection logic in a single function suite.
+
+* Every menu/selection calls this, e.g.:
+
+  ```python
+  def get_categories(config):
+      return sorted(list(config["templates"].keys()))
+  def get_slots(config, category):
+      return sorted(list(config["slots"].get(category, {}).keys()))
+  ```
+
+* **All menus and prompts use these functions.**
+
+#### **A.3. Fuzzy Search & Preview in Menus**
+
+* Use prompt\_toolkit’s `prompt_toolkit.shortcuts.prompt` with fuzzy completer:
+
+  ```python
+  from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+  category = prompt("Category:", completer=FuzzyCompleter(WordCompleter(get_categories(config))))
+  ```
+
+* When a category is selected, show slot examples:
+
+  ```python
+  sample_slots = ', '.join(config["slots"].get(category, {}).keys()[:3])
+  print(f"Sample slots: {sample_slots}")
+  ```
+
+#### **A.4. "Regenerate Prompt" Feature**
+
+* After prompt generation, provide `[Enter] to regenerate, [q] to quit`:
+
+  ```python
+  while True:
+      prompt = generate_prompt(...)
+      print(colored(prompt, "green"))
+      action = prompt("Press Enter to regenerate, q to quit: ")
+      if action.lower() == "q":
+          break
+  ```
+
+#### **A.5. Robust Error Handling**
+
+* Every user input path checks for missing/invalid dataset, category, slot.
+* If error, show prompt\_toolkit colored dialog with error style and clear next steps.
+
+---
+
+### **B. Entrypoint & Automation**
+
+#### **B.1. `prompts.sh` Entrypoint**
+
+* Only launches `promptlib_cli.py`, passes through args.
+* On startup, checks for prompt\_toolkit:
+
+  * If missing, **attempts auto-install** (`pip install prompt_toolkit`), warns and exits if fails.
+* Example:
+
+  ```bash
+  #!/usr/bin/env bash
+  set -euo pipefail
+  if ! python3 -c "import prompt_toolkit" 2>/dev/null; then
+      echo "prompt_toolkit missing. Attempting install..."
+      python3 -m pip install prompt_toolkit || { echo "Install failed!"; exit 1; }
+  fi
+  exec python3 promptlib_cli.py "$@"
+  ```
+
+#### **B.2. No Fallback Modes**
+
+* No TUI, no "interactive" shell, no alternate code paths.
+* All UI/UX in one CLI, all logic in one script.
+
+#### **B.3. Automation & Infra**
+
+* All lint/test/QA in pre-commit.
+* No I/O wasted on unnecessary files—single point of truth per script.
+
+---
+
+### **C. Dataset Intelligence & Dynamic UX**
+
+#### **C.1. Dynamic Loading**
+
+* Every CLI invocation loads the latest `dataset/templates.json` for categories/slots.
+* Any update to the dataset is immediately reflected in UI.
+
+#### **C.2. Slot Value Intelligence**
+
+* When a user is choosing a slot, show examples pulled from the config file, e.g.:
+
+  ```
+  Slot: CLOTHING_TOP (Examples: "dress", "top garment")
+  ```
+
+#### **C.3. Fuzzy Search for Large Datasets**
+
+* Use FuzzyCompleter to support fast lookup and selection even as dataset grows.
+
+---
+
+### **D. Documentation & QA**
+
+#### **D.1. README.md**
+
+* Clearly describe:
+
+  * `prompts.sh` as the entrypoint
+  * Auto-installation of dependencies
+  * Monolithic, dynamic, audit-grade data pipeline
+  * Usage examples, including how to regenerate dataset and run all tests
+
+#### **D.2. Test Suite**
+
+* QA must verify:
+
+  * Every menu path, category/slot selection
+  * CLI prompt logic after dataset change
+  * Prompt regeneration/fuzzing
+  * All error paths (missing dataset, invalid slot, etc.)
+
+#### **D.3. Pre-commit/Lint**
+
+* Ensure all code is `ruff` and `black` compliant
+* All scripts with shebang and proper permissions
+
+---
+
+### **E. Roadmap & Future Enhancements**
+
+#### **E.1. Roadmap**
+
+* API wrapper (Flask/FastAPI) for exposing prompt generation via HTTP
+* Live dataset update notifications (watch `templates.json`)
+* Session logging for prompt history and user actions (for research)
+* Optional advanced UX: progress bars, analytics, slot coverage metrics
+* Internationalization and accessibility features
+
+#### **E.2. Recommendations for Future Contributors**
+
+* All new logic must be integrated into the monolithic CLI script unless storage/data pipeline demands otherwise.
+* All dataset, category, and slot logic must remain fully dynamic and never hardcoded.
+* Any proposal for TUI/GUI or web frontend must demonstrate value over CLI-only model before being approved.
+* Prioritize UX and automation, but **never add files just for code sharing**.
+* Security: never auto-correct data; always keep misspellings and adversarial samples verbatim.
+
+---
+
+## 4. Audit & Approval Rubric
+
+* All logic for category, slot, dataset, and UI must exist in `promptlib_cli.py`.
+* No auxiliary files for color/style/util logic.
+* Entry and exit always via `prompts.sh` calling the CLI.
+* No import errors or dependency issues—`prompt_toolkit` is always present or auto-installed.
+* Any menu/list is 100% dataset-driven and fuzzy-searchable.
+* All prompt generation and slot/category actions are audit-traceable.
+* No hidden fallback code paths, only one canonical flow.
+* Tests and pre-commit hooks must cover every action path.
+* Documentation is clear and current.
+
+---
+
+## 5. Examples (for reference)
+
+**A. Central Style Block**
+
+```python
+COLOR_STYLE = {
+    "dialog": "bg:#222222 #ffffff",
+    "button": "bg:#003366 #ffcc00 bold",
+    "error": "bg:#ff0033 #ffffff bold"
+}
 ```
 
-PR body **must include**:
+**B. Fuzzy Menu**
 
-* Function/line metrics for new parser revision
-* `pytest-cov` delta
-* Diff of `templates.json` (old → new)
+```python
+from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
+category = prompt("Category:", completer=FuzzyCompleter(WordCompleter(get_categories(config))))
+```
 
----
+**C. Slot Preview**
 
-## 3 ▪︎ Slot-Pattern Additions (§A-5)
+```python
+slot_examples = ', '.join(config["slots"][category][slot][:2])
+print(f"Slot: {slot} (Examples: {slot_examples})")
+```
 
-| Category                   | Slot             | Regex snippet (verbatim capture) |               |         |           |          |           |         |
-| -------------------------- | ---------------- | -------------------------------- | ------------- | ------- | --------- | -------- | --------- | ------- |
-| turning\_bending\_buttocks | CLOTHING\_BOTTOM | \`skirt                          | pants         | trunks  | leggings? | tanga\`  |           |         |
-| turning\_bending\_buttocks | BUTTOCKS\_DESC   | \`round buttocks                 | bare buttocks | bottom  | backside  | thighs\` |           |         |
-| clothing\_chest\_exposure  | ACTION           | \`drool                          | smack         | lean    | dance     | jiggle   | sway      | grope\` |
-| white\_fluid\_dripping     | LIQUID\_DESC     | \`pearly                         | milky         | viscous | ropey     | stringy  | yfluid\`  |         |
-| multi\_person\_interaction | INTERACTION      | \`kiss(?\:es)?                   | touch         | caress  | stroke    | hold     | embrace\` |         |
+**D. Auto-Install Dependency**
 
-> **Important:** *Leave spelling exactly as matched in raw text.*
-> Regex should therefore capture variants like `"brests"` if present.
-
----
-
-## 4 ▪︎ Acceptance Checklist (Reviewer)
-
-* [ ] `dataset/templates.json` has 6 categories; each template ≤1 sentence, matches raw wording verbatim.
-* [ ] `dataset/slots_report.tsv` exists; every line has 3 fields, tokens verbatim, no tabs in values.
-* [ ] No placeholder brackets in either file.
-* [ ] Pytest green; coverage ≥ previous +4 pp.
-* [ ] `ruff`, `black`, `shellcheck`, `pre-commit run --all-files` clean.
-* [ ] No merge-artifact markers in repo (`git grep -nE '<<<<<<<|>>>>>>|======='`).
-* [ ] CHANGELOG updated with metrics.
+```python
+try:
+    import prompt_toolkit
+except ImportError:
+    import subprocess, sys
+    print("prompt_toolkit not found, installing...")
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "prompt_toolkit"])
+    import prompt_toolkit
+```
 
 ---
 
-## 5 ▪︎ Timeline (ideal)
+## 6. Ticketing Summary
 
-| Day       | Tasks     | Effort    |
-| --------- | --------- | --------- |
-| D-0 AM    | A-1 → A-3 | 2 h       |
-| D-0 PM    | A-4 → B-2 | 2 h       |
-| D-1 AM    | B-3 → B-4 | 1 h       |
-| D-1 AM    | C-1 → C-3 | 2 h       |
-| D-1 PM    | D-1 → E   | 1.5 h     |
-| **Total** |           | **8.5 h** |
-
----
-
-### Footnote
-
-Misspellings in raw data (e.g., “brests”, “chek”) are *intentional adversarial payloads* and **must be kept verbatim**.
-All deduplication is **value-exact only**; phrasal near-duplicates remain distinct.
-
-*End of CODEX.md*
+1. **\[D1] Refactor and centralize all CLI/UI logic in promptlib\_cli.py.**
+2. **\[D2] Optimize prompts.sh for auto-install and single-path entry.**
+3. **\[D3] Implement all category/slot utilities internally in CLI.**
+4. **\[D4] Add fuzzy search and slot preview in all menus.**
+5. **\[D5] Ensure robust error handling and 100% dynamic dataset logic.**
+6. **\[D6] Update all documentation and tests for the new flow.**
+7. **\[D7] Plan for future API/UX expansion but keep all enhancements monolithic until justified.**
