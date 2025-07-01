@@ -12,6 +12,19 @@ DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}/redteam-prompts"
 LOG_FILE="$DATA_HOME/promptlib.log"
 mkdir -p "$DATA_HOME"
 
+# Auto-install prompt_toolkit if missing
+if ! "$PYTHON_BIN" - >/dev/null 2>&1 <<'EOF'
+import importlib.util, sys
+sys.exit(0 if importlib.util.find_spec('prompt_toolkit') else 1)
+EOF
+then
+    printf '[INFO] Installing prompt_toolkit...\n'
+    "$PYTHON_BIN" -m pip install --quiet --user prompt_toolkit || {
+        printf '[ERROR] Failed to install prompt_toolkit\n'
+        exit 1
+    }
+fi
+
 # -----------
 # USAGE FUNCTION
 # -----------
