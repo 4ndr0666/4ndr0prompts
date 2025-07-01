@@ -319,4 +319,3 @@ if __name__ == "__main__":
         safe_cli_menu()
     else:
         PromptGenApp().run()
-
