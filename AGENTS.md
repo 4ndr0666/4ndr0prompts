@@ -47,7 +47,7 @@
 # ──────────────────
 #   git checkout -b feature/<task>
 #   ./codex-merge-clean.sh $(git ls-files '*.sh' '*.py')
-#   ruff --fix . && black .
+#   ruff check --fix . && black .
 #   PYTHONPATH=. pytest -q
 #   git add -u && git commit -m "<type>: <message>"
 #   pre-commit run --all-files
