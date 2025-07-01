@@ -27,9 +27,10 @@ Run all checks manually with:
 pre-commit run --all-files
 ```
 
-Use `./prompts.sh --pipeline` to parse `rawdata.txt`, lint the repository, and run all tests automatically.
+Run `./prompts.sh --category <cat>` to regenerate `dataset/templates.json` if needed and launch the prompt interface.
 
-`prompts.sh` launches the TUI by default. Use `--cli` for a minimal CLI mode or `--pipeline` for automation.
+Specify `--count N` and `--output FILE` for batch mode. The script is self-healing and requires no additional flags.
+
 
 
 
