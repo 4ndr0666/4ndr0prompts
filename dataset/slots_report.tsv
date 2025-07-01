@@ -1,0 +1,15 @@
+clothing_chest_exposure	ACTION	Dance
+clothing_chest_exposure	ACTION	drool
+clothing_chest_exposure	ACTION	grope
+clothing_chest_exposure	ACTION	jiggle
+clothing_chest_exposure	ACTION	lean
+clothing_chest_exposure	ACTION	sway
+white_fluid_dripping	LIQUID_DESC	milky
+white_fluid_dripping	LIQUID_DESC	viscous
+white_fluid_dripping	LIQUID_DESC	yfluid
+multi_person_interaction	INTERACTION	hold
+multi_person_interaction	INTERACTION	kiss
+multi_person_interaction	INTERACTION	kisses
+multi_person_interaction	INTERACTION	stroke
+multi_person_interaction	INTERACTION	touch
+turning_bending_buttocks	BUTTOCKS_DESC	bottom
