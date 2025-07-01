@@ -1,0 +1,49 @@
+name: CI
+
+on:
+  push:
+    branches: [ work ]
+  pull_request:
+
+jobs:
+  lint-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install ruff black mypy bandit pytest shellcheck
+      - name: Check for docs-only changes
+        id: changes
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+            base="${{ github.event.pull_request.base.sha }}"
+          else
+            base=$(git rev-parse HEAD~1)
+          fi
+          files=$(git diff --name-only "$base" HEAD)
+          echo "Changed files:\n$files"
+          docs_only=true
+          for f in $files; do
+            case "$f" in
+              *.md|*.rst|*.txt)
+                ;;
+              *)
+                docs_only=false
+                break
+                ;;
+            esac
+          done
+          echo "docs_only=$docs_only" >> "$GITHUB_OUTPUT"
+      - name: Run codex-generate
+        if: steps.changes.outputs.docs_only == 'false'
+        run: bash 0-tests/codex-generate.sh
+      - name: Skip docs-only
+        if: steps.changes.outputs.docs_only == 'true'
+        run: echo "Documentation-only changes; skipping lint/test."
+
