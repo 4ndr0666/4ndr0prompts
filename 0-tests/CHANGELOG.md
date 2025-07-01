@@ -1,4 +1,5 @@
 ## Unreleased
+- remove deprecated promptlib2 and TUI modules; delete old tests
 - add pyproject with ruff and black config
 - run black and ruff formatting on entire repo
 - add pre-commit config running ruff, black, pytest, and codex-merge-clean

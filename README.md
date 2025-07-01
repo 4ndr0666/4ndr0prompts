@@ -28,6 +28,7 @@ pre-commit run --all-files
 ```
 
 Run `./prompts.sh --category <cat>` to regenerate `dataset/templates.json` if needed and launch the prompt interface.
+Only `prompts.sh` launches the prompt interface and regenerates templates as needed.
 
 Specify `--count N` and `--output FILE` for batch mode. The script is self-healing and requires no additional flags.
 
