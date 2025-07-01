@@ -27,9 +27,14 @@ Run all checks manually with:
 pre-commit run --all-files
 ```
 
-Use `./prompts.sh --pipeline` to parse `rawdata.txt`, lint the repository, and run all tests automatically.
+Run `./prompts.sh --category <cat>` to generate prompts. The script
+automatically refreshes `dataset/templates.json` from `rawdata.txt` before
+launching the prompt interface.
 
-`prompts.sh` launches the TUI by default. Use `--cli` for a minimal CLI mode or `--pipeline` for automation.
+Specify `--count N` and `--output FILE` for batch mode. Logs are written to
+`${XDG_DATA_HOME:-$HOME/.local/share}/redteam/logs/prompts_sh.log`.
+
+
 
 
 
