@@ -100,8 +100,8 @@ run_pipeline() {
         eval "$CMD"
     fi
     FILES=$(git ls-files '*.py' '*.sh')
-    chmod +x 0-tests/codex-merge-clean.sh
-    ./0-tests/codex-merge-clean.sh "$FILES"
+    chmod 755 0-tests/codex-generate.sh
+    bash 0-tests/codex-generate.sh "$FILES"
     ruff check --fix .
     black .
     PYTHONPATH=. pytest -q
