@@ -1,10 +1,10 @@
 # 4ndr0prompts
 
-This repository contains utilities for generating and testing red-team prompt mutations. Development follows strict linting and testing rules.
+This repository contains utilities for generating red-team prompt mutations. The interface is driven entirely by `promptlib_cli.py` which uses `prompt_toolkit` for fuzzy, colorised menus. Use the `prompts.sh` script as the single entrypoint.
 
 ## Setup
 
-1. Install the development dependencies:
+1. Install development dependencies:
    ```bash
    pip install pre-commit ruff black pytest shellcheck
    ```
@@ -12,13 +12,21 @@ This repository contains utilities for generating and testing red-team prompt mu
    ```bash
    pre-commit install
    ```
-3. The hooks run `0-tests/codex-merge-clean.sh` first and then execute
-   **ruff**, **black**, **shellcheck**, and **pytest** on changed files.
+3. Hooks run `0-tests/codex-merge-clean.sh` and then execute **ruff**, **black**, **shellcheck**, and **pytest** on changed files.
+
+## Usage
+
+Run the CLI via:
+
+```bash
+./prompts.sh
+```
+
+All categories and slots are loaded dynamically from `dataset/templates.json`. Updating the dataset automatically updates the menu options without code changes.
 
 ## Development Workflow
 
 - All code changes must pass **ruff**, **black**, **pytest**, and the merge-artifact scrubber `0-tests/codex-merge-clean.sh`.
-- The hooks run automatically via pre-commit and should also run in CI for every pull request that modifies code files.
 - Documentation-only updates can skip these checks, but mixed changes run the full suite.
 
 Run all checks manually with:
@@ -32,6 +40,3 @@ To regenerate the template dataset in verbatim mode:
 ```bash
 PYTHONPATH=. python scripts/parse_rawdata.py --write --trim-sentences 1
 ```
-
-
-
