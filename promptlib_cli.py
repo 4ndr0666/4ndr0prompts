@@ -26,24 +26,43 @@ DEFAULT_LOG_DIR = os.path.join(
     "logs",
 )
 
-# ---- Defensive promptlib import ----
-try:
-    import promptlib
-except ImportError as e:
-    print(f"\033[31mFATAL: Could not import promptlib.py: {e}\033[0m")
-    sys.exit(1)
+
+_DATA_CACHE: tuple[dict, dict] | None = None
 
 
-def get_category_choices():
+def load_data(config_path: str | None = None) -> tuple[dict, dict]:
+    """Return templates and slots from configuration with caching."""
+    global _DATA_CACHE
+    if _DATA_CACHE is None or config_path is not None:
+        if config_path is None:
+            _DATA_CACHE = load_config()
+        else:
+            _DATA_CACHE = load_config(config_path)
+    return _DATA_CACHE
+
+
+def get_category_choices(config_path: str | None = None) -> list[str]:
+    """Return category keys from the dataset configuration."""
     try:
-        cats = list(getattr(promptlib, "TEMPLATES", {}).keys())
-        return cats if cats else []
+        templates, _ = load_data(config_path)
+        return list(templates.keys())
     except Exception:
         return []
 
 
-def select_categories(categories: list[str]) -> list[str]:
-    """Interactively select categories using fuzzy completion."""
+def _slot_preview(category: str, slots: dict[str, dict[str, list]]) -> str:
+    slotmap = slots.get(category, {})
+    lines = []
+    for slot, values in slotmap.items():
+        sample = ", ".join(values[:2])
+        lines.append(f"{slot}: {sample}")
+    return "\n".join(lines) if lines else "No slots available."
+
+
+def select_categories(
+    categories: list[str], slots: dict[str, dict[str, list]]
+) -> list[str]:
+    """Interactively select categories using fuzzy completion with slot preview."""
     completer = FuzzyWordCompleter(categories, WORD=True)
     selected: list[str] = []
     while True:
@@ -55,7 +74,13 @@ def select_categories(categories: list[str]) -> list[str]:
         if not choice:
             break
         if choice in categories and choice not in selected:
-            selected.append(choice)
+            preview = _slot_preview(choice, slots)
+            if yes_no_dialog(
+                title=f"Add '{choice}'?",
+                text=f"{preview}\n\nAdd this category?",
+                style=style,
+            ).run():
+                selected.append(choice)
         else:
             message_dialog(
                 title="ERROR",
@@ -120,7 +145,8 @@ def main():
         text="Enter categories (press ENTER on blank line to finish).",
         style=style,
     ).run()
-    selected = select_categories(categories)
+    _, slots_data = load_data()
+    selected = select_categories(categories, slots_data)
     if not selected:
         print("Aborted. No categories selected.")
         sys.exit(0)
@@ -166,28 +192,28 @@ def main():
             templates, slots = load_config(config_path)
             template = templates[cat]
             slotset = slots[cat]
-            prompts = [generate_prompt(template, slotset) for _ in range(count)]
         except Exception as e:
             message_dialog(
-                title="ERROR", text=f"Failed to generate for {cat}:\n{e}", style=style
+                title="ERROR", text=f"Failed to load data for {cat}:\n{e}", style=style
             ).run()
             continue
-        # Preview dialog
-        preview = "\n".join([f"{i+1}. {p}" for i, p in enumerate(prompts)])
-        if not yes_no_dialog(
-            title=f"Preview for '{cat}' ({idx+1}/{len(selected)})",
-            text=f"{preview}\n\nSave these prompts?",
-            style=style,
-        ).run():
-            continue
-        # Save
-        outdir = ensure_output_dir(cat)
-        ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-        outfile = f"{outdir}/prompts_{cat}_{ts}.txt"
-        write_previewed_prompts(cat, prompts, outfile)
-        message_dialog(
-            title="Saved", text=f"Prompts saved to:\n{outfile}", style=style
-        ).run()
+
+        while True:
+            prompts = [generate_prompt(template, slotset) for _ in range(count)]
+            preview = "\n".join([f"{i+1}. {p}" for i, p in enumerate(prompts)])
+            if yes_no_dialog(
+                title=f"Preview for '{cat}' ({idx+1}/{len(selected)})",
+                text=f"{preview}\n\nSave these prompts? (No = regenerate)",
+                style=style,
+            ).run():
+                outdir = ensure_output_dir(cat)
+                ts = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+                outfile = f"{outdir}/prompts_{cat}_{ts}.txt"
+                write_previewed_prompts(cat, prompts, outfile)
+                message_dialog(
+                    title="Saved", text=f"Prompts saved to:\n{outfile}", style=style
+                ).run()
+                break
     # Final message
     message_dialog(
         title="PromptLib CLI Done",

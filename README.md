@@ -22,7 +22,7 @@ Run the CLI via:
 ./prompts.sh
 ```
 
-All categories and slots are loaded dynamically from `dataset/templates.json`. Updating the dataset automatically updates the menu options without code changes.
+All categories and slots are loaded dynamically from `dataset/templates.json`. The category selector previews available slots, and previews can be regenerated until you save. Updating the dataset automatically updates the menu options without code changes.
 
 ## Development Workflow
 
