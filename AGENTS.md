@@ -1,33 +1,23 @@
-# 🚦 **AGENTS.md — Monolithic Best Practices and Operating Policy**
-
-```markdown
-# AGENTS.md (Best Practices / Guidelines)
+# AGENTS.md (Best Practices / Project Guidelines)
 
 ---
 
-* **Single-Entry Workflow**: All CLI, UX, and dataset logic centralized in one script (promptlib_cli.py); entry via prompts.sh only.
-* **No extraneous files/imports for UX/color/style—logic remains in the main CLI.**
-* **prompt_toolkit is required and auto-installed before any CLI runs.**
-* **All category and slot logic must be fully dynamic, loaded at runtime from dataset/templates.json.**
-* **Menus and prompt logic must always use fuzzy completers for large datasets.**
-* **Verbatim Data Policy**: All data, including misspellings/adversarial content, is preserved and displayed exactly as found in dataset.
-* **All error messages are colorized and actionable; fatal errors halt execution.**
-* **No fallback modes, alternate flows, TUI, or GUI (strict monolithic model).**
-* **Codebase must always be ruff/black/shellcheck clean, with pre-commit hooks enforced.**
-* **Documentation (README, CHANGELOG) must reflect current entrypoints, workflows, and test coverage.**
-* **Tests must cover all dataset-driven UI paths and error flows.**
-* **No structural refactor or new modules/files unless justified by resource, security, or research needs (document justification in PR).**
-* **Security, research, and adversarial rigor always take precedence over convenience or visual polish.**
-* **All team communication and PRs should reference AGENTS.md and CODEX.md for acceptance.**
+- **prompt_toolkit** is mandatory; must be present or auto-installed before CLI runs.
+- **Monolithic policy:** Never introduce new files or external imports for UX, color, or style. All logic must be inline in the CLI.
+- **Color scheme:** All prompt_toolkit elements must use #15FFFF (neon cyan) for maximum visibility, accessibility, and adversarial review. No deviation.
+- **Fuzzy completion everywhere:** Menus, prompts, and all selection logic must always use fuzzy completers for large datasets.
+- **Dynamic data only:** All category and slot logic must be loaded live at runtime from dataset/templates.json. No static or hardcoded lists.
+- **Slot randomization:** Each prompt generated must randomize slot values, never static or repeated unless requested.
+- **Auditability:** All prompts, errors, and outputs must be saved/audit-logged with clear timestamps and traceability for research/review.
+- **Colorized error messages:** All errors must be visible, actionable, and use the project color scheme for immediate user feedback.
+- **No fallback/TUI/GUI:** Absolutely no alternate modes or UI. If prompt_toolkit is not available, the shell wrapper must install it or exit with error.
+- **Automation:** All code must be ruff, black, and shellcheck clean, enforced by pre-commit hooks before any merge.
+- **Test coverage:** Automated tests must cover every UI path, error, and audit output, simulating all dataset-driven flows.
+- **Documentation:** README and code comments must be up to date, clear, and reflect CLI, data, and style logic.
+- **Change management:** Any proposal to break the monolith or add new UI/config files requires explicit written resource/performance justification.
+- **Security & research:** Misspellings and adversarial samples in data must never be autocorrected; they must be shown verbatim.
+- **Accessibility:** All UI colors and flows must remain accessible to all users, especially for vision and color sensitivity.
 
 ---
 
-**This document remains the authoritative guide for policy, best practice, and compliance. All new development and reviews must be aligned to these principles.**
-```
-
----
-
-## **How to Use**
-
-* **CODEX.md:** For project management, sprint planning, technical work orders, and cross-team delegation.
-* **AGENTS.md:** As the standing operating procedure and policy anchor—reference for every PR, commit, or onboarding.
+*All contributors must review AGENTS.md and CODEX.md before any implementation or PR. All major changes require cross-team audit and explicit project lead approval.*
