@@ -229,3 +229,69 @@ def main():
 
 if __name__ == "__main__":
     main()
+
+
+# ---------------------------------------------------------------------------
+# Builder utilities used by prompts.sh
+# Options are loaded via canonical_loader to maintain the canonical chain.
+
+try:
+    from canonical_loader import load_options
+except Exception:  # pragma: no cover - fallback for import errors
+
+    def load_options():
+        return {}
+
+
+_OPTS = load_options()
+
+POSE_TAGS = _OPTS.get("pose_tags", [])
+LIGHTING_OPTIONS = _OPTS.get("lighting_options", [])
+LENS_OPTIONS = _OPTS.get("lens_options", [])
+CAMERA_OPTIONS = _OPTS.get("camera_options", [])
+ENVIRONMENT_OPTIONS = _OPTS.get("environment_options", [])
+SHADOW_OPTIONS = _OPTS.get("shadow_options", [])
+DETAIL_PROMPTS = _OPTS.get("detail_prompts", [])
+AGE_GROUP_OPTIONS = _OPTS.get("age_group_options", [])
+GENDER_OPTIONS = _OPTS.get("gender_options", [])
+ORIENTATION_OPTIONS = _OPTS.get("orientation_options", [])
+EXPRESSION_OPTIONS = _OPTS.get("expression_options", [])
+SHOT_FRAMING_OPTIONS = _OPTS.get("shot_framing_options", [])
+ACTION_SEQUENCE_OPTIONS = _OPTS.get("action_sequence_options", [])
+CAMERA_MOVE_TAGS = _OPTS.get("camera_move_tags", [])
+
+
+def build_pose_block(tag: str) -> str:
+    return f"> pose\nPose: {tag}."
+
+
+def build_lighting_block(opt: str) -> str:
+    return f"Lighting: {opt}."
+
+
+def build_shadow_block(opt: str) -> str:
+    return f"Shadow Quality: {opt}."
+
+
+def build_lens_block(opt: str) -> str:
+    return f"Lens: {opt}."
+
+
+def build_camera_block(tags: list[str]) -> str:
+    joined = ", ".join(tags)
+    return f"Camera Movement: {joined}."
+
+
+def build_environment_block(opt: str) -> str:
+    return f"Environment: {opt}."
+
+
+def build_detail_block(opt: str) -> str:
+    return f"Detail Focus: {opt}."
+
+
+def build_deakins_block() -> list[str]:
+    return [
+        "Deakins lighting augmentation applied for cinematic realism.",
+        "Lighting: deakins-style.",
+    ]
