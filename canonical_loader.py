@@ -10,11 +10,13 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, Tuple
+import json
 
 import prompt_config
 import plugin_loader
 
 _CACHE: dict[tuple[str, str], tuple[float, float, Tuple[dict, dict, dict]]] = {}
+_OPTS_CACHE: dict[str, Tuple[float, dict]] = {}
 
 
 def _mtimes(config: Path, plugin_dir: Path) -> tuple[float, float]:
@@ -53,3 +55,18 @@ def is_valid_option(category: str, option: str, plugins: dict) -> bool:
     """Return True if option is valid for category."""
     opts = plugins.get(category, [])
     return option in opts
+
+
+def load_options(path: str | None = None) -> dict:
+    """Load base option lists from dataset with hot reload."""
+    opt_path = Path(path or Path(__file__).parent / "dataset" / "options.json")
+    mtime = opt_path.stat().st_mtime if opt_path.exists() else 0.0
+    cached = _OPTS_CACHE.get(str(opt_path))
+    if cached and cached[0] == mtime:
+        return cached[1]
+    if not opt_path.is_file():
+        _OPTS_CACHE[str(opt_path)] = (mtime, {})
+        return {}
+    data = json.loads(opt_path.read_text(encoding="utf-8"))
+    _OPTS_CACHE[str(opt_path)] = (mtime, data)
+    return data
