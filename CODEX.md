@@ -1,286 +1,280 @@
-# CODEX.md
-
-*Canonical Work Order and Execution Plan: Red-Team Prompt Mutation Toolkit*
+# CODEX.md — Red-Team Prompt Mutation Toolkit (Final Sprint Work Order)
 
 ---
 
-## 0. Mission Statement
+## **0. Mission Statement & Sprint Objective**
 
-This sprint delivers a fully agentic, monolithic, high-performance prompt mutation toolkit with **verbatim, dataset-driven adversarial prompt generation**.
-All UI/UX logic and styling are centralized, using **prompt\_toolkit** for CLI. The entrypoint is `prompts.sh` (which auto-installs dependencies as needed), and all menu/category/slot logic is dynamic, driven by canonical data.
-**No extraneous files or I/O** are permitted for UI or style sharing.
-All deliverables are actionable and cross-referenced for team members.
-
----
-
-## 1. Team Roles & RACI
-
-| Role/Task          | Dev | QA | UX | Ops | Lead |
-| ------------------ | --- | -- | -- | --- | ---- |
-| CLI refactor       | X   |    | X  |     |      |
-| prompt\_toolkit UX |     |    | X  |     |      |
-| Data pipeline      | X   | X  |    |     |      |
-| Automation & infra |     |    |    | X   |      |
-| Code review/audit  | X   | X  | X  | X   | X    |
-| Docs               | X   |    |    |     | X    |
-| Roadmap/future     |     |    |    |     | X    |
+> **Mission:**
+> Deliver a monolithic, prompt\_toolkit-powered adversarial prompt aggregator for red team prompt mutation, with dynamic category/slot mapping from a canonical dataset, randomized slot selection, and audit-robust logging.
+> No fallback or redundant UI/UX code paths. All logic, dataset handling, and interface workflows must be centralized, maintainable, and dynamically data-driven.
 
 ---
 
-## 2. Deliverable Matrix
+## **1. RACI Table — Roles and Responsibilities**
 
-| ID  | Deliverable/Path                | Owner | Key Acceptance Tests/Criteria                          |
-| --- | ------------------------------- | ----- | ------------------------------------------------------ |
-| D1  | `promptlib_cli.py` (monolithic) | Dev   | All logic centralized, no imports for style/logic      |
-| D2  | `prompts.sh` (entrypoint)       | Dev   | Auto-installs prompt\_toolkit if missing, launches CLI |
-| D3  | `dataset/templates.json`        | Dev   | All categories/slots loaded dynamically                |
-| D4  | Category/Slot utility           | Dev   | Unified function suite, all menu input calls it        |
-| D5  | Centralized color/style block   | Dev   | All dialogs share one style dict, no external files    |
-| D6  | Dynamic, fuzzy, live menus      | Dev   | Menus auto-update on dataset changes                   |
-| D7  | "Regenerate prompt" feature     | Dev   | CLI can reshuffle, show prev/next                      |
-| D8  | Sample slot preview in menus    | UX    | User sees examples before picking                      |
-| D9  | Robust error handling           | QA    | Any missing category/slot triggers colored error       |
-| D10 | Tests for CLI & dataset logic   | QA    | 100% menu path coverage, dataset changes tested        |
-| D11 | README usage & workflow         | Dev   | Describes entry, auto-install, dynamic logic           |
-| D12 | Automation/infra scripts        | Ops   | Pre-commit, lint, test, no fallback modes              |
+| Task Area              | Dev | QA | UX | Docs | Ops | Lead |
+| ---------------------- | --- | -- | -- | ---- | --- | ---- |
+| CLI/UI refactor        | X   |    | X  |      |     |      |
+| Dataset/dynamic loader | X   | X  |    |      |     |      |
+| Slot/category utils    | X   |    |    |      |     |      |
+| Audit logging          | X   | X  |    |      |     |      |
+| Test suite/coverage    |     | X  |    |      |     |      |
+| Automation/lint/CI     | X   |    |    |      | X   |      |
+| Documentation          |     |    |    | X    |     |      |
+| Review/merge           |     |    |    |      |     | X    |
+| Roadmap/future         |     |    |    |      |     | X    |
 
 ---
 
-## 3. Task Breakdown & Technical Explanation
+## **2. Deliverable Matrix (D#) — Acceptance Criteria**
 
-### **A. CLI Refactor & Monolithic Design**
-
-#### **A.1. Centralize All UI/UX Logic**
-
-* Refactor `promptlib_cli.py` to encapsulate:
-
-  * All menu, dialog, and prompt flows
-  * All prompt\_toolkit logic (input, color, completion)
-  * Category/slot dataset handling, fuzzy search, and preview
-* **No imports** for UI/UX, style, or dataset logic from outside files
-* Example:
-
-  ```python
-  # At top of promptlib_cli.py
-  COLOR_STYLE = {
-      "dialog": "bg:#212121 #ffffff",
-      "button": "bg:#003366 #ffcc00 bold",
-      "error": "bg:#ff0033 #ffffff bold"
-      # ...
-  }
-  ```
-
-#### **A.2. Shared Category/Slot Utility**
-
-* All category/slot retrieval, validation, and selection logic in a single function suite.
-
-* Every menu/selection calls this, e.g.:
-
-  ```python
-  def get_categories(config):
-      return sorted(list(config["templates"].keys()))
-  def get_slots(config, category):
-      return sorted(list(config["slots"].get(category, {}).keys()))
-  ```
-
-* **All menus and prompts use these functions.**
-
-#### **A.3. Fuzzy Search & Preview in Menus**
-
-* Use prompt\_toolkit’s `prompt_toolkit.shortcuts.prompt` with fuzzy completer:
-
-  ```python
-  from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
-  category = prompt("Category:", completer=FuzzyCompleter(WordCompleter(get_categories(config))))
-  ```
-
-* When a category is selected, show slot examples:
-
-  ```python
-  sample_slots = ', '.join(config["slots"].get(category, {}).keys()[:3])
-  print(f"Sample slots: {sample_slots}")
-  ```
-
-#### **A.4. "Regenerate Prompt" Feature**
-
-* After prompt generation, provide `[Enter] to regenerate, [q] to quit`:
-
-  ```python
-  while True:
-      prompt = generate_prompt(...)
-      print(colored(prompt, "green"))
-      action = prompt("Press Enter to regenerate, q to quit: ")
-      if action.lower() == "q":
-          break
-  ```
-
-#### **A.5. Robust Error Handling**
-
-* Every user input path checks for missing/invalid dataset, category, slot.
-* If error, show prompt\_toolkit colored dialog with error style and clear next steps.
+| ID  | Deliverable / Path           | Owner | Acceptance Tests / Criteria                                                |
+| --- | ---------------------------- | ----- | -------------------------------------------------------------------------- |
+| D1  | `promptlib_cli.py` (sole UI) | Dev   | Only CLI entrypoint, all menu/UI logic centralized, no imports for UI/UX   |
+| D2  | `prompts.sh` (entrypoint)    | Dev   | Auto-installs prompt\_toolkit, only runs monolithic CLI, no fallback flags |
+| D3  | Category/slot utilities      | Dev   | All dynamic, menu-agnostic, support fuzzy search, slot previews            |
+| D4  | Dataset loader/validator     | Dev   | Always loads fresh from dataset/templates.json, audits new categories      |
+| D5  | Fuzzy, dynamic menus         | Dev   | All menus use prompt\_toolkit fuzzy completer, preview sample slot values  |
+| D6  | Robust audit logging         | Dev   | All generation is logged (category, slot, timestamp, prompt text)          |
+| D7  | Unified color/style block    | Dev   | All dialogs/menus use centralized, reusable style dict, no color imports   |
+| D8  | README/docs                  | Docs  | Only references canonical CLI, single workflow, dataset-driven operation   |
+| D9  | Test suite/coverage          | QA    | Tests all menu, dataset, and error paths; audit log coverage               |
+| D10 | Pre-commit/CI automation     | Ops   | Lint, black, ruff, shellcheck, and tests run for all PRs                   |
 
 ---
 
-### **B. Entrypoint & Automation**
-
-#### **B.1. `prompts.sh` Entrypoint**
-
-* Only launches `promptlib_cli.py`, passes through args.
-* On startup, checks for prompt\_toolkit:
-
-  * If missing, **attempts auto-install** (`pip install prompt_toolkit`), warns and exits if fails.
-* Example:
-
-  ```bash
-  #!/usr/bin/env bash
-  set -euo pipefail
-  if ! python3 -c "import prompt_toolkit" 2>/dev/null; then
-      echo "prompt_toolkit missing. Attempting install..."
-      python3 -m pip install prompt_toolkit || { echo "Install failed!"; exit 1; }
-  fi
-  exec python3 promptlib_cli.py "$@"
-  ```
-
-#### **B.2. No Fallback Modes**
-
-* No TUI, no "interactive" shell, no alternate code paths.
-* All UI/UX in one CLI, all logic in one script.
-
-#### **B.3. Automation & Infra**
-
-* All lint/test/QA in pre-commit.
-* No I/O wasted on unnecessary files—single point of truth per script.
+## **3. Technical Task Breakdown & Instructions**
 
 ---
 
-### **C. Dataset Intelligence & Dynamic UX**
+### **A. Monolithic CLI/UI Refactor**
 
-#### **C.1. Dynamic Loading**
+#### **A1. Delete/Consolidate All UI Files**
 
-* Every CLI invocation loads the latest `dataset/templates.json` for categories/slots.
-* Any update to the dataset is immediately reflected in UI.
+* **Delete**: `promptlib_interactive.py`, `promptlib_tui.py`, and any code referencing TUI/GUI or “--simple-cli”.
+* **Migrate**: Any unique features or logic from these files *must* be ported to `promptlib_cli.py` before deletion.
+* **Retain**: Only `promptlib_cli.py` as the interactive menu interface.
+* **No fallback or alternate entrypoints** are allowed (per AGENTS.md).
+* **Acceptance Test**: Only `promptlib_cli.py` runs as interactive menu; no code or docs reference TUI/interactive/fallback flows.
 
-#### **C.2. Slot Value Intelligence**
+#### **A2. Centralize All Menu/Prompt Logic**
 
-* When a user is choosing a slot, show examples pulled from the config file, e.g.:
+* **All** input dialogs, menus, slot selectors, previews, error messages, and colored status lines must be implemented in `promptlib_cli.py`.
+* **Menu code must use prompt\_toolkit**: Utilize dialog, list, input, and confirmation widgets for each step (category, slot, count, preview, save).
+* **All error paths and confirmations** must be colorized using a centralized style dictionary.
 
-  ```
-  Slot: CLOTHING_TOP (Examples: "dress", "top garment")
-  ```
+#### **A3. Single Source of Data: Dynamic Loader**
 
-#### **C.3. Fuzzy Search for Large Datasets**
-
-* Use FuzzyCompleter to support fast lookup and selection even as dataset grows.
-
----
-
-### **D. Documentation & QA**
-
-#### **D.1. README.md**
-
-* Clearly describe:
-
-  * `prompts.sh` as the entrypoint
-  * Auto-installation of dependencies
-  * Monolithic, dynamic, audit-grade data pipeline
-  * Usage examples, including how to regenerate dataset and run all tests
-
-#### **D.2. Test Suite**
-
-* QA must verify:
-
-  * Every menu path, category/slot selection
-  * CLI prompt logic after dataset change
-  * Prompt regeneration/fuzzing
-  * All error paths (missing dataset, invalid slot, etc.)
-
-#### **D.3. Pre-commit/Lint**
-
-* Ensure all code is `ruff` and `black` compliant
-* All scripts with shebang and proper permissions
+* All category/slot data must come dynamically from `dataset/templates.json` at runtime, via a loader utility (either as internal function or `prompt_config.py` import).
+* No hard-coded lists. Menus, previews, slot suggestions all reflect latest dataset.
+* Loader must validate and warn if new categories or slots are found (and log them).
+* Loader must gracefully handle missing, corrupt, or misaligned dataset files.
 
 ---
 
-### **E. Roadmap & Future Enhancements**
+### **B. UX/UX Polish and Dynamic Dataset Mapping**
 
-#### **E.1. Roadmap**
+#### **B1. Fuzzy Completer for Menus**
 
-* API wrapper (Flask/FastAPI) for exposing prompt generation via HTTP
-* Live dataset update notifications (watch `templates.json`)
-* Session logging for prompt history and user actions (for research)
-* Optional advanced UX: progress bars, analytics, slot coverage metrics
-* Internationalization and accessibility features
+* **All category and slot menus** must use prompt\_toolkit’s `FuzzyCompleter` for rapid, typo-tolerant searching (test with >50 categories/slots).
+* On selection, menu must show **sample slot values** in preview (at least 2-3 real examples, not placeholder text).
 
-#### **E.2. Recommendations for Future Contributors**
+#### **B2. Unified Style and Error Handling**
 
-* All new logic must be integrated into the monolithic CLI script unless storage/data pipeline demands otherwise.
-* All dataset, category, and slot logic must remain fully dynamic and never hardcoded.
-* Any proposal for TUI/GUI or web frontend must demonstrate value over CLI-only model before being approved.
-* Prioritize UX and automation, but **never add files just for code sharing**.
-* Security: never auto-correct data; always keep misspellings and adversarial samples verbatim.
+* Define a **single, reusable style dictionary** at the top of `promptlib_cli.py`.
 
----
+  * Example:
 
-## 4. Audit & Approval Rubric
-
-* All logic for category, slot, dataset, and UI must exist in `promptlib_cli.py`.
-* No auxiliary files for color/style/util logic.
-* Entry and exit always via `prompts.sh` calling the CLI.
-* No import errors or dependency issues—`prompt_toolkit` is always present or auto-installed.
-* Any menu/list is 100% dataset-driven and fuzzy-searchable.
-* All prompt generation and slot/category actions are audit-traceable.
-* No hidden fallback code paths, only one canonical flow.
-* Tests and pre-commit hooks must cover every action path.
-* Documentation is clear and current.
+    ```python
+    COLOR_STYLE = {
+        "dialog": "bg:#222222 #ffffff",
+        "button": "bg:#003366 #ffcc00 bold",
+        "error": "bg:#ff0033 #ffffff bold"
+    }
+    ```
+* All dialogs and prompts must use this dictionary; no in-line or repeated color codes.
+* All error messages and “success” banners must be colorized.
+* All invalid/missing/unknown category or slot selections must produce clear, actionable error dialogs and audit logs.
 
 ---
 
-## 5. Examples (for reference)
+### **C. Audit-Grade Logging and Output**
 
-**A. Central Style Block**
+#### **C1. Structured, Tamper-Resistant Audit Logs**
 
-```python
-COLOR_STYLE = {
-    "dialog": "bg:#222222 #ffffff",
-    "button": "bg:#003366 #ffcc00 bold",
-    "error": "bg:#ff0033 #ffffff bold"
-}
-```
+* All prompt generations (category, slots, full prompt text, timestamp) must be logged to a unique audit log file in a protected directory (e.g., `~/.local/share/redteam-prompts/logs/prompt_audit.log`).
+* All log writes must be append-only and flush immediately.
+* All prompt outputs must include category, slots, and full text.
+* If file/dir creation fails, surface error to user with colorized message and audit the failure.
 
-**B. Fuzzy Menu**
+#### **C2. Output Structure**
 
-```python
-from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
-category = prompt("Category:", completer=FuzzyCompleter(WordCompleter(get_categories(config))))
-```
+* Generated prompts must be saved as:
 
-**C. Slot Preview**
-
-```python
-slot_examples = ', '.join(config["slots"][category][slot][:2])
-print(f"Slot: {slot} (Examples: {slot_examples})")
-```
-
-**D. Auto-Install Dependency**
-
-```python
-try:
-    import prompt_toolkit
-except ImportError:
-    import subprocess, sys
-    print("prompt_toolkit not found, installing...")
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "prompt_toolkit"])
-    import prompt_toolkit
-```
+  * Human-readable .txt files per category and session
+  * Audit logs in TSV/JSONL or similar (timestamp, category, prompt, slots)
+  * Optionally, display and confirm save location to user
+* Directory creation must be automated; no manual setup.
 
 ---
 
-## 6. Ticketing Summary
+### **D. Automation, Linting, CI/CD**
+
+#### **D1. `prompts.sh` Entrypoint**
+
+* Must check for Python 3.10+, prompt\_toolkit, and all required dependencies.
+* If missing, **auto-install prompt\_toolkit** using pip before launching CLI.
+* No reference to “--tui”, “--interactive”, or legacy flags.
+* Always calls `promptlib_cli.py` as the single UI.
+* **Acceptance**: Shellcheck clean, ruff/black clean, and pre-commit enforced.
+
+#### **D2. Lint, Formatting, and Automation**
+
+* All Python: PEP8, ruff/black clean.
+* All shell: POSIX, shellcheck, shfmt clean.
+* All scripts require `#!/usr/bin/env` shebang.
+* All merge-conflict artifacts must be cleaned using `0-tests/codex-merge-clean.sh`.
+* Pre-commit config must include ruff, black, pytest, shellcheck, and merge-clean hooks.
+* All automation scripts must reside in `/0-tests` or `/scripts`.
+
+---
+
+### **E. Test Suite Expansion**
+
+#### **E1. Dataset and Menu Path Coverage**
+
+* All menu paths, slot selections, category choices, and error paths must be exercised in tests.
+* Use mocks or test harnesses to automate selection and validation.
+* **Acceptance**: `pytest -q` passes 100%; `PYTHONPATH=. pytest -q` is documented.
+
+#### **E2. Fuzzy Search and Slot Preview Test**
+
+* Add tests to verify:
+
+  * Fuzzy search matches substrings, typos.
+  * Slot previews display the expected values for the category chosen.
+  * Invalid/unknown slot or category selection yields proper error and log entry.
+
+#### **E3. Audit Log Integrity**
+
+* Tests must ensure that:
+
+  * All generations are logged (category, slot, prompt, timestamp).
+  * Log entries are append-only and well-formatted.
+  * Audit log file is created if missing, and error if permissions fail.
+
+---
+
+### **F. Documentation**
+
+#### **F1. README.md**
+
+* Remove any reference to legacy UI or TUI interfaces.
+* Document:
+
+  * Only one entrypoint: `prompts.sh`
+  * All dataset and slot logic is dynamic and centralized
+  * How to update dataset/templates.json and see menu auto-update
+  * Example CLI flows, expected file outputs, and error paths
+* Document all test, lint, and audit commands.
+
+#### **F2. Inline CLI --help**
+
+* The `--help` flag for both CLI and shell scripts must display all required options, argument details, and usage examples.
+* Usage block should always print list of available categories (fetched from dataset, not hard-coded).
+
+---
+
+## **4. Further Enhancements / Roadmap**
+
+### **G.1. Optional (for future sprints, not this release)**
+
+* **REST API Layer:**
+  Expose prompt generation over HTTP via Flask/FastAPI, returning audit logs as JSON.
+* **Live Dataset Reload:**
+  Watch for changes in `templates.json` and auto-refresh menu without restarting CLI.
+* **Session Analytics:**
+  Generate coverage reports, per-category stats, and slot usage graphs.
+* **Internationalization (i18n):**
+  Support for multi-language prompt/slot values and UI strings.
+* **Pluggable Slot Extractors:**
+  Allow research plugins to inject new categories/slots from custom datasets.
+
+---
+
+## **5. Audit & Production Approval Rubric**
+
+1. **Monolithic Structure:**
+
+   * Only `promptlib_cli.py` serves as UI; all other interactive files deleted.
+2. **No Redundant I/O:**
+
+   * No additional UI, color, or dataset-sharing files.
+3. **Full Fuzzy Menus:**
+
+   * Fuzzy completer in all selection steps; slot previews present.
+4. **Dynamic Dataset:**
+
+   * Changing `templates.json` instantly updates menus without code changes.
+5. **Error Handling:**
+
+   * All errors are colorized and actionable; all failed actions logged.
+6. **Test Coverage:**
+
+   * All menu and prompt flows are tested; coverage must be reported.
+7. **Docs & CLI Usage:**
+
+   * Only a single path for use; README/--help are accurate and up to date.
+8. **Pre-commit Hooks:**
+
+   * All lint, format, merge-artifact and test hooks run clean.
+9. **Audit Logs:**
+
+   * All generations and errors logged with timestamp, category, and prompt text.
+
+**Any PR that fails any of the above must be rejected.**
+
+---
+
+## **6. Ticketing Summary (Ready for Delegation)**
 
 1. **\[D1] Refactor and centralize all CLI/UI logic in promptlib\_cli.py.**
-2. **\[D2] Optimize prompts.sh for auto-install and single-path entry.**
-3. **\[D3] Implement all category/slot utilities internally in CLI.**
-4. **\[D4] Add fuzzy search and slot preview in all menus.**
-5. **\[D5] Ensure robust error handling and 100% dynamic dataset logic.**
-6. **\[D6] Update all documentation and tests for the new flow.**
-7. **\[D7] Plan for future API/UX expansion but keep all enhancements monolithic until justified.**
+
+   * Remove TUI/interactive/legacy files; port useful code.
+   * Confirm all input/output/error logic is present.
+
+2. **\[D2] Confirm prompts.sh only launches promptlib\_cli.py, auto-installs prompt\_toolkit, and passes all arguments.**
+
+3. **\[D3] Consolidate all category/slot utilities in promptlib\_cli.py, no redundant code.**
+
+4. **\[D4] Implement fuzzy search and dynamic slot preview in all menus.**
+
+5. **\[D5] Centralize style dict, colorize all output and errors, remove any hard-coded color logic.**
+
+6. **\[D6] Expand and document test suite for menu path, slot preview, error, and log integrity.**
+
+7. **\[D7] Update all documentation, README, and --help text to reflect new workflow.**
+
+8. **\[D8] Ensure pre-commit, lint, and CI/CD pipelines enforce all of the above.**
+
+9. **\[D9] Draft a roadmap (in CHANGELOG or CODEX) for optional API/web, i18n, or analytics features.**
+
+---
+
+## **7. Acceptance Procedure (QA/Lead)**
+
+* On PR, lead must check:
+
+  * [ ] No UI fallback or legacy flows exist
+  * [ ] Dataset changes reflected live
+  * [ ] Fuzzy search and slot preview work
+  * [ ] Audit log and outputs are correct
+  * [ ] All tests, lint, and automation pass
+  * [ ] Docs and help match production flow
+  * [ ] Only `promptlib_cli.py` is entrypoint for menu/UI
+
+* **Reject** any PR not meeting above criteria.
+
+---
+
+**End of CODEX.md — Assign each \[D#] to named team member(s) and proceed.**
