@@ -10,8 +10,8 @@ def test_get_category_choices():
 
 
 def test_slot_preview_contains_slot():
-    _, slots = cli.load_data()
-    text = cli._slot_preview("insertion_oral_mouth", slots)
+    cfg = cli.load_dict()
+    text = cli._slot_preview("insertion_oral_mouth", cfg)
     assert "OBJECT" in text
 
 

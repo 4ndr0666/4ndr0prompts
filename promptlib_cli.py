@@ -15,7 +15,7 @@ from prompt_toolkit.shortcuts import (
     yes_no_dialog,
 )
 from prompt_toolkit import prompt
-from prompt_toolkit.completion import FuzzyWordCompleter
+from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
 from prompt_config import generate_prompt, load_config
@@ -28,6 +28,22 @@ DEFAULT_LOG_DIR = os.path.join(
 
 
 _DATA_CACHE: tuple[dict, dict] | None = None
+
+
+def load_dict(config_path: str | None = None) -> dict:
+    """Return dataset as a single dictionary."""
+    templates, slots = load_data(config_path)
+    return {"templates": templates, "slots": slots}
+
+
+def get_categories(cfg: dict) -> list[str]:
+    """Return sorted category names from dataset config."""
+    return sorted(cfg["templates"].keys())
+
+
+def get_slots(cfg: dict, category: str) -> list[str]:
+    """Return sorted slot names for a category from dataset config."""
+    return sorted(cfg["slots"].get(category, {}).keys())
 
 
 def load_data(config_path: str | None = None) -> tuple[dict, dict]:
@@ -44,14 +60,14 @@ def load_data(config_path: str | None = None) -> tuple[dict, dict]:
 def get_category_choices(config_path: str | None = None) -> list[str]:
     """Return category keys from the dataset configuration."""
     try:
-        templates, _ = load_data(config_path)
-        return list(templates.keys())
+        cfg = load_dict(config_path)
+        return get_categories(cfg)
     except Exception:
         return []
 
 
-def _slot_preview(category: str, slots: dict[str, dict[str, list]]) -> str:
-    slotmap = slots.get(category, {})
+def _slot_preview(category: str, cfg: dict) -> str:
+    slotmap = cfg["slots"].get(category, {})
     lines = []
     for slot, values in slotmap.items():
         sample = ", ".join(values[:2])
@@ -59,11 +75,9 @@ def _slot_preview(category: str, slots: dict[str, dict[str, list]]) -> str:
     return "\n".join(lines) if lines else "No slots available."
 
 
-def select_categories(
-    categories: list[str], slots: dict[str, dict[str, list]]
-) -> list[str]:
+def select_categories(categories: list[str], cfg: dict) -> list[str]:
     """Interactively select categories using fuzzy completion with slot preview."""
-    completer = FuzzyWordCompleter(categories, WORD=True)
+    completer = FuzzyCompleter(WordCompleter(categories))
     selected: list[str] = []
     while True:
         choice = prompt(
@@ -74,7 +88,7 @@ def select_categories(
         if not choice:
             break
         if choice in categories and choice not in selected:
-            preview = _slot_preview(choice, slots)
+            preview = _slot_preview(choice, cfg)
             if yes_no_dialog(
                 title=f"Add '{choice}'?",
                 text=f"{preview}\n\nAdd this category?",
@@ -125,12 +139,15 @@ def write_previewed_prompts(category, prompts, output_path):
 
 style = Style.from_dict(
     {
-        "dialog": "bg:#23272e #ffffff",
-        "dialog.body": "bg:#23272e #6ee7b7",
+        "dialog": "bg:#23272e #15FFFF",
+        "dialog.body": "bg:#23272e #15FFFF",
         "dialog shadow": "bg:#23272e",
-        "button": "bg:#38bdf8 #222222",
-        "button-arrow": "#facc15",
-        "dialog frame.label": "bg:#38bdf8 #000000",
+        "button": "bg:#15FFFF #23272e bold",
+        "button-arrow": "#15FFFF",
+        "dialog frame.label": "bg:#15FFFF #000000",
+        "completion-menu.completion": "fg:#15FFFF bg:#23272e",
+        "completion-menu.completion.current": "fg:#23272e bg:#15FFFF",
+        "error": "bg:#23272e #15FFFF bold",
     }
 )
 
@@ -145,8 +162,8 @@ def main():
         text="Enter categories (press ENTER on blank line to finish).",
         style=style,
     ).run()
-    _, slots_data = load_data()
-    selected = select_categories(categories, slots_data)
+    cfg = load_dict()
+    selected = select_categories(categories, cfg)
     if not selected:
         print("Aborted. No categories selected.")
         sys.exit(0)
