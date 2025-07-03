@@ -22,7 +22,7 @@ Run the CLI via:
 ./prompts.sh
 ```
 
-All categories and slots are loaded dynamically from `dataset/templates.json`. The category selector previews available slots, and previews can be regenerated until you save. Updating the dataset automatically updates the menu options without code changes.
+All categories and slots are loaded dynamically via `canonical_loader.py`, which reads `dataset/templates.json` and merges any plugin packs in `plugins/`. The category selector previews available slots, and previews can be regenerated until you save. Updating the dataset or plugin directory hot-reloads the available options without code changes.
 
 ## Development Workflow
 

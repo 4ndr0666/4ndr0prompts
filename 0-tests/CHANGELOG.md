@@ -6,6 +6,8 @@
 - integrate shellcheck into pre-commit hooks and expand README instructions
 - add mapping table in promptlib2 and new tests
 - add --simple-cli argument for promptlib_tui with import test
+- implement plugin_loader with YAML/JSON/Markdown packs and tests
+- add canonical_loader with hot reload and CLI integration
 
 
 

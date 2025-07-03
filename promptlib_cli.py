@@ -18,7 +18,8 @@ from prompt_toolkit import prompt
 from prompt_toolkit.completion import FuzzyCompleter, WordCompleter
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
-from prompt_config import generate_prompt, load_config
+from prompt_config import generate_prompt
+from canonical_loader import load_canonical
 
 DEFAULT_LOG_DIR = os.path.join(
     os.environ.get("XDG_DATA_HOME", os.path.expanduser("~/.local/share")),
@@ -47,13 +48,11 @@ def get_slots(cfg: dict, category: str) -> list[str]:
 
 
 def load_data(config_path: str | None = None) -> tuple[dict, dict]:
-    """Return templates and slots from configuration with caching."""
+    """Return templates and slots using the canonical loader."""
     global _DATA_CACHE
     if _DATA_CACHE is None or config_path is not None:
-        if config_path is None:
-            _DATA_CACHE = load_config()
-        else:
-            _DATA_CACHE = load_config(config_path)
+        templates, slots, _ = load_canonical(config_path)
+        _DATA_CACHE = (templates, slots)
     return _DATA_CACHE
 
 
@@ -170,9 +169,9 @@ def main():
 
     # Prompt count (validated)
     class IntValidator(Validator):
-        def validate(self, doc):
+        def validate(self, document):
             try:
-                v = int(doc.text)
+                v = int(document.text)
                 if not (1 <= v <= 1000):
                     raise ValueError
             except Exception:
@@ -206,7 +205,7 @@ def main():
     # For each category: preview and save
     for idx, cat in enumerate(selected):
         try:
-            templates, slots = load_config(config_path)
+            templates, slots, _ = load_canonical(config_path)
             template = templates[cat]
             slotset = slots[cat]
         except Exception as e:
