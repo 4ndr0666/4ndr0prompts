@@ -10,11 +10,12 @@ import sys
 import datetime
 from prompt_toolkit.validation import Validator, ValidationError
 from prompt_toolkit.shortcuts import (
-    checkboxlist_dialog,
     input_dialog,
     message_dialog,
     yes_no_dialog,
 )
+from prompt_toolkit import prompt
+from prompt_toolkit.completion import FuzzyWordCompleter
 from prompt_toolkit.styles import Style
 from prompt_toolkit.completion import PathCompleter
 from prompt_config import generate_prompt, load_config
@@ -39,6 +40,29 @@ def get_category_choices():
         return cats if cats else []
     except Exception:
         return []
+
+
+def select_categories(categories: list[str]) -> list[str]:
+    """Interactively select categories using fuzzy completion."""
+    completer = FuzzyWordCompleter(categories, WORD=True)
+    selected: list[str] = []
+    while True:
+        choice = prompt(
+            "Category (ENTER to finish): ",
+            completer=completer,
+            style=style,
+        ).strip()
+        if not choice:
+            break
+        if choice in categories and choice not in selected:
+            selected.append(choice)
+        else:
+            message_dialog(
+                title="ERROR",
+                text=f"Unknown category: {choice}",
+                style=style,
+            ).run()
+    return selected
 
 
 def now_str():
@@ -91,13 +115,12 @@ def main():
     if not categories:
         print("\033[31mFATAL: No prompt categories found in promptlib.py!\033[0m")
         sys.exit(1)
-    # Multi-select (checkboxlist) dialog
-    selected = checkboxlist_dialog(
+    message_dialog(
         title="PromptLib Category Selection",
-        text="Select one or more categories to generate prompts for:",
-        values=[(cat, cat) for cat in categories],
+        text="Enter categories (press ENTER on blank line to finish).",
         style=style,
     ).run()
+    selected = select_categories(categories)
     if not selected:
         print("Aborted. No categories selected.")
         sys.exit(0)
