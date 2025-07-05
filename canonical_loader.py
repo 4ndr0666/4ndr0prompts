@@ -70,3 +70,19 @@ def load_options(path: str | None = None) -> dict:
     data = json.loads(opt_path.read_text(encoding="utf-8"))
     _OPTS_CACHE[str(opt_path)] = (mtime, data)
     return data
+
+
+def list_categories(
+    config_path: str | None = None, plugin_dir: str | None = None
+) -> list[str]:
+    """Return sorted category names from the canonical dataset."""
+    templates, _, _ = load_canonical(config_path, plugin_dir)
+    return sorted(templates.keys())
+
+
+def list_slots(
+    category: str, config_path: str | None = None, plugin_dir: str | None = None
+) -> dict:
+    """Return slot mapping for a given category from the canonical dataset."""
+    _, slots, _ = load_canonical(config_path, plugin_dir)
+    return slots.get(category, {})
