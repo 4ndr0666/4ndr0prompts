@@ -24,3 +24,4 @@
 
 
 
+- add canonical_cli utility and new list functions

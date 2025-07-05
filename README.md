@@ -9,6 +9,7 @@ This repository contains utilities for generating red-team prompt mutations. The
    pip install pre-commit ruff black pytest shellcheck
    ```
 2. Install the pre-commit hooks:
+
    ```bash
    pre-commit install
    ```
@@ -23,6 +24,16 @@ Run the CLI via:
 ```
 
 All categories and slots are loaded dynamically via `canonical_loader.py`, which reads `dataset/templates.json` and merges any plugin packs in `plugins/`. The category selector previews available slots, and previews can be regenerated until you save. Updating the dataset or plugin directory hot-reloads the available options without code changes.
+
+### Inspecting the canonical dataset
+
+Use `canonical_cli.py` to list categories or inspect slots for a category. This tool relies on `canonical_loader.py` as required by CODEX.
+
+```bash
+./canonical_cli.py --list-categories
+./canonical_cli.py --show-slots pose
+```
+
 
 ## Development Workflow
 
