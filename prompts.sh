@@ -20,7 +20,7 @@ CAT="$(tput setaf 6)[ACTION]$(tput sgr0)" # Cyan primary highlight
 ## Usage / Help
 
 usage() {
-    cat <<EOT
+	cat <<EOT
 Usage: $(basename "$0") [--interactive] [--deakins] [--plugin <file.md>]
 
 Examples:
@@ -38,7 +38,7 @@ Note:
   • CLI mode (e.g. --pose <tag> or --desc <text>) is a future TODO.
   • For full parameter autocompletion and ease of use, run --interactive.
 EOT
-    exit 1
+	exit 1
 }
 
 ## Global Variables & Defaults
@@ -58,7 +58,7 @@ BAD_WORDS_REGEX='(sexual|porn|gore|torture|rape|beheading|extremist|hate|terror|
 
 ## Camera movement tags for validation
 readarray -t CAMERA_MOVE_TAGS < <(
-    python3 - <<'PY'
+	python3 - <<'PY'
 from promptlib import CAMERA_MOVE_TAGS
 for t in CAMERA_MOVE_TAGS:
     print(t)
@@ -69,41 +69,41 @@ readonly CAMERA_MOVE_TAGS
 ## Argument Parsing
 
 while [[ $# -gt 0 ]]; do
-    case "$1" in
-    --deakins)
-        USE_DEAKINS=1
-        shift
-        ;;
-    --dry-run)
-        DRY_RUN=1
-        shift
-        ;;
-    --interactive)
-        INTERACTIVE=1
-        shift
-        ;;
-    --plugin)
-        [[ $# -lt 2 ]] && {
-            echo "${ERROR} --plugin requires a file path"
-            exit 1
-        }
-        PLUGIN_FILES+=("$2")
-        shift 2
-        ;;
-    --help)
-        usage
-        ;;
-    *)
-        usage
-        ;;
-    esac
+	case "$1" in
+	--deakins)
+		USE_DEAKINS=1
+		shift
+		;;
+	--dry-run)
+		DRY_RUN=1
+		shift
+		;;
+	--interactive)
+		INTERACTIVE=1
+		shift
+		;;
+	--plugin)
+		[[ $# -lt 2 ]] && {
+			echo "${ERROR} --plugin requires a file path"
+			exit 1
+		}
+		PLUGIN_FILES+=("$2")
+		shift 2
+		;;
+	--help)
+		usage
+		;;
+	*)
+		usage
+		;;
+	esac
 done
 
 ## Step 1: Interactive “Prompt Builder” Mode (enforced)
 
 if [[ $INTERACTIVE -eq 1 ]]; then
-    FINAL_OUTPUT="$(
-        python3 - "$USE_DEAKINS" <<'PYEOF'
+	FINAL_OUTPUT="$(
+		python3 - "$USE_DEAKINS" <<'PYEOF'
 import sys
 from promptlib import (
     POSE_TAGS,
@@ -272,84 +272,84 @@ with tty_in, tty_out:
     final = "\n".join(lines)
     print(final)
 PYEOF
-    )"
+	)"
 
-    if [[ $USE_DEAKINS -eq 1 ]]; then
-        DEAKINS_NOTE="*Note: Deakins lighting augmentation applied for cinematic realism.*"
-        FINAL_OUTPUT=$(printf '%s\n' "$FINAL_OUTPUT" | sed '/Deakins lighting augmentation applied for cinematic realism\./d')
-    fi
+	if [[ $USE_DEAKINS -eq 1 ]]; then
+		DEAKINS_NOTE="*Note: Deakins lighting augmentation applied for cinematic realism.*"
+		FINAL_OUTPUT=$(printf '%s\n' "$FINAL_OUTPUT" | sed '/Deakins lighting augmentation applied for cinematic realism\./d')
+	fi
 
-    echo "─────────────────────────────────────"
-    echo "🎬 Final Prompt:"
-    printf '%s\n' "$FINAL_OUTPUT"
-    [[ $USE_DEAKINS -eq 1 ]] && echo "$DEAKINS_NOTE"
-    echo "─────────────────────────────────────"
-    echo "🎛️  Builder Mode: standard"
-    if [[ $USE_DEAKINS -eq 1 ]]; then
-        echo "🔧 Components Used: pose, deakins_lighting, shadow, lens, camera, framing, environment, detail"
-    else
-        echo "🔧 Components Used: pose, lighting, shadow, lens, camera, framing, environment, detail"
-    fi
+	echo "─────────────────────────────────────"
+	echo "🎬 Final Prompt:"
+	printf '%s\n' "$FINAL_OUTPUT"
+	[[ $USE_DEAKINS -eq 1 ]] && echo "$DEAKINS_NOTE"
+	echo "─────────────────────────────────────"
+	echo "🎛️  Builder Mode: standard"
+	if [[ $USE_DEAKINS -eq 1 ]]; then
+		echo "🔧 Components Used: pose, deakins_lighting, shadow, lens, camera, framing, environment, detail"
+	else
+		echo "🔧 Components Used: pose, lighting, shadow, lens, camera, framing, environment, detail"
+	fi
 
-    if command -v wl-copy >/dev/null 2>&1; then
-        CLEAN_COPY=$(printf '%s\n' "$FINAL_OUTPUT" | sed '1d;$d;s/^\s\{4\}//;s/[[:space:]]*$//')
-        printf '%s\n' "$CLEAN_COPY" | wl-copy
-        echo "${OK} Prompt copied to clipboard via wl-copy."
-    else
-        echo "${WARN} wl-copy not installed. Skipping clipboard copy."
-    fi
+	if command -v wl-copy >/dev/null 2>&1; then
+		CLEAN_COPY=$(printf '%s\n' "$FINAL_OUTPUT" | sed '1d;$d;s/^\s\{4\}//;s/[[:space:]]*$//')
+		printf '%s\n' "$CLEAN_COPY" | wl-copy
+		echo "${OK} Prompt copied to clipboard via wl-copy."
+	else
+		echo "${WARN} wl-copy not installed. Skipping clipboard copy."
+	fi
 
-    exit 0
+	exit 0
 fi
 
 if [[ $INTERACTIVE -eq 0 && ${#PLUGIN_FILES[@]} -eq 0 ]]; then
-    usage
+	usage
 fi
 
 declare -a PROMPTS=()
 
 for file in "${PLUGIN_FILES[@]}"; do
-    if [[ ! -f $file ]]; then
-        echo "${ERROR} Plugin file not found: $file" >&2
-        exit 1
-    fi
+	if [[ ! -f $file ]]; then
+		echo "${ERROR} Plugin file not found: $file" >&2
+		exit 1
+	fi
 
-    while IFS= read -r -d '' block; do
-        PROMPTS+=("$block")
-    done < <(python3 plugin_loader.py "$file")
-    status=${PIPESTATUS[0]}
-    if [[ $status -ne 0 ]]; then
-        echo "${ERROR} Failed to load plugin: $file" >&2
-        exit "$status"
-    fi
+	while IFS= read -r -d '' block; do
+		PROMPTS+=("$block")
+	done < <(python3 plugin_loader.py "$file")
+	status=${PIPESTATUS[0]}
+	if [[ $status -ne 0 ]]; then
+		echo "${ERROR} Failed to load plugin: $file" >&2
+		exit "$status"
+	fi
 done
 
 if [[ ${#PROMPTS[@]} -eq 0 ]]; then
-    exit 0
+	exit 0
 fi
 
 mapfile -t TITLES < <(
-    for p in "${PROMPTS[@]}"; do
-        echo "$p" | sed -n '1s/^"\{0,1\}//;s/"$//;p;'
-    done
+	for p in "${PROMPTS[@]}"; do
+		echo "$p" | sed -n '1s/^"\{0,1\}//;s/"$//;p;'
+	done
 )
 
 sel=$(printf '%s\n' "${TITLES[@]}" | fzf --prompt="${CAT} Select prompt: " --height=40% --border)
 if [[ -z $sel ]]; then
-    echo "${INFO} No selection." >&2
-    exit 130
+	echo "${INFO} No selection." >&2
+	exit 130
 fi
 
 idx=-1
 for i in "${!TITLES[@]}"; do
-    if [[ "${TITLES[$i]}" == "$sel" ]]; then
-        idx=$i
-        break
-    fi
+	if [[ "${TITLES[$i]}" == "$sel" ]]; then
+		idx=$i
+		break
+	fi
 done
 if ((idx < 0)); then
-    echo "${ERROR} Selection error." >&2
-    exit 1
+	echo "${ERROR} Selection error." >&2
+	exit 1
 fi
 
 prompt="${PROMPTS[$idx]}"
@@ -358,15 +358,15 @@ warn() { printf "%s %s\n" "$WARN" "$1" >&2; }
 
 tag_ok=0
 for tag in "${CAMERA_MOVE_TAGS[@]}"; do
-    if grep -qiF "$tag" <<<"$prompt"; then
-        tag_ok=1
-        break
-    fi
+	if grep -qiF "$tag" <<<"$prompt"; then
+		tag_ok=1
+		break
+	fi
 done
 ((tag_ok)) || warn "No [camera movement] tag detected."
 
 if grep -Eiq "$BAD_WORDS_REGEX" <<<"$prompt"; then
-    warn "Policy-violating term detected."
+	warn "Policy-violating term detected."
 fi
 
 dur_line=$(grep -Eo '^Duration:[[:space:]]*[0-9]+' <<<"$prompt" || true)
@@ -376,26 +376,26 @@ dur=0
 
 reso_line=$(grep -Eo '^Resolution:[[:space:]]*[0-9]{3,4}p' <<<"$prompt" || true)
 if [[ -z $reso_line ]]; then
-    warn "No Resolution: field."
+	warn "No Resolution: field."
 else
-    reso=${reso_line##*:}
-    [[ ! $reso =~ $RESO_REGEX ]] && warn "Malformed resolution string."
-    num=${reso%p}
-    ((num > 1080)) && warn "Resolution ${reso} exceeds 1080p cap."
+	reso=${reso_line##*:}
+	[[ ! $reso =~ $RESO_REGEX ]] && warn "Malformed resolution string."
+	num=${reso%p}
+	((num > 1080)) && warn "Resolution ${reso} exceeds 1080p cap."
 fi
 
 if ! grep -q "\*Note: cinematic references must be interpreted within each platform’s current capabilities\.\*" <<<"$prompt"; then
-    prompt+=$'\n'*"Note: cinematic references must be interpreted within each platform’s current capabilities.*"
+	prompt+=$'\n'*"Note: cinematic references must be interpreted within each platform’s current capabilities.*"
 fi
 
 for kv in "${ATTACH[@]:-}"; do
-    key=${kv%%=*}
-    path=${kv#*=}
-    case $key in
-    --image) prompt+=$'\n'"INPUT_IMAGE: $path" ;;
-    --video) prompt+=$'\n'"INPUT_VIDEO: $path" ;;
-    --storyboard) prompt+=$'\n'"STORYBOARD_FILE: $path" ;;
-    esac
+	key=${kv%%=*}
+	path=${kv#*=}
+	case $key in
+	--image) prompt+=$'\n'"INPUT_IMAGE: $path" ;;
+	--video) prompt+=$'\n'"INPUT_VIDEO: $path" ;;
+	--storyboard) prompt+=$'\n'"STORYBOARD_FILE: $path" ;;
+	esac
 done
 
 ops=(Re-cut Remix Blend Loop Stabilize ColorGrade Skip)
@@ -405,15 +405,14 @@ post=$(printf '%s\n' "${ops[@]}" | fzf --prompt="${CAT} Post-gen op? " --height=
 payload="# === // SORA //\n\n$prompt"
 
 if command -v bat >/dev/null 2>&1; then
-    printf '%b\n' "$payload" | bat --language=md --style=plain --paging=always
+	printf '%b\n' "$payload" | bat --language=md --style=plain --paging=always
 else
-    printf '%b\n' "$payload" | less -R
+	printf '%b\n' "$payload" | less -R
 fi
 
 if command -v wl-copy >/dev/null 2>&1; then
-    printf '%b\n' "$payload" | wl-copy
-    echo "${OK} Prompt copied to clipboard via wl-copy."
+	printf '%b\n' "$payload" | wl-copy
+	echo "${OK} Prompt copied to clipboard via wl-copy."
 else
-    echo "${WARN} wl-copy not installed; skipping clipboard copy."
+	echo "${WARN} wl-copy not installed; skipping clipboard copy."
 fi
-
