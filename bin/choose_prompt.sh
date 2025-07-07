@@ -2,9 +2,11 @@
 # SPDX-License-Identifier: MIT
 set -euo pipefail
 IFS=$'\n\t'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 choice=$(
-	python3 - <<'PY'
+	PYTHONPATH="$REPO_ROOT" python3 - <<'PY'
 from canonical_loader import list_categories
 for c in list_categories():
     print(c)

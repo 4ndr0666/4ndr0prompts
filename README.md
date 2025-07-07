@@ -12,7 +12,7 @@ bin/prompts.sh
 ## Usage
 
 The `prompts.sh` wrapper allows you to generate prompts from the canonical
-dataset. Select a category when prompted and the resulting text will be copied
+dataset located in `dataset/templates.json`. Select a category when prompted and the resulting text will be copied
 to your clipboard (if `xclip` is available).
 
 ## Setup
@@ -24,6 +24,8 @@ Run `make setup` to install Python requirements and common tooling such as
 
 ![architecture](docs/architecture.png)
 
-The system is composed of simple shell wrappers that call into Python utilities
-for loading the dataset and plugins. See `docs/ADR-0001.md` for full design
+The system is composed of shell wrappers that call into Python utilities for
+loading the dataset and plugins. Each script resolves its own directory using
+`SCRIPT_DIR="$(cd "$(dirname \"${BASH_SOURCE[0]}\")" && pwd)"` ensuring
+location agnostic execution. See `docs/ADR-0001.md` for full design
 decisions.
