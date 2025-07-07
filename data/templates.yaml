@@ -1,2 +1,10 @@
-hello: "Hello {name}"
-goodbye: "Goodbye {name}"
+templates:
+  hello: "Hello [name]"
+  goodbye: "Goodbye [name]"
+slots:
+  hello:
+    name:
+      - World
+  goodbye:
+    name:
+      - World

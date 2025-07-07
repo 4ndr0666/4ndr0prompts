@@ -11,8 +11,8 @@ def test_get_category_choices():
 
 def test_slot_preview_contains_slot():
     cfg = cli.load_dict()
-    text = cli._slot_preview("insertion_oral_mouth", cfg)
-    assert "OBJECT" in text
+    text = cli._slot_preview("hello", cfg)
+    assert "name" in text.lower()
 
 
 def test_ensure_output_dir(tmp_path, monkeypatch):

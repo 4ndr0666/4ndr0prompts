@@ -14,9 +14,14 @@ repos:
         files: ''
       - id: pytest
         name: pytest
-        entry: bash -c 'PYTHONPATH=. pytest -q'
+        entry: bash -c 'PYTHONPATH=. pytest -q --cov=.'
         language: system
         types: [python]
+      - id: bats
+        name: bats
+        entry: bash -c 'bats -r test/test_scripts.bats'
+        language: system
+        types: [shell]
       - id: shellcheck
         name: ShellCheck (bash)
         entry: shellcheck -x
