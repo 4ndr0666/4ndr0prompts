@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+      - name: Build tarball
+        run: tar -czf prompts.tar.gz bin lib
+      - name: Upload Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: prompts.tar.gz

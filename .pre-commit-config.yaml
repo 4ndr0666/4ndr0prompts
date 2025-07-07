@@ -2,7 +2,7 @@ repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: check-executables-have-shebangs  
+      - id: check-executables-have-shebangs
   - repo: local
     hooks:
       - id: codex-merge-clean
@@ -12,16 +12,19 @@ repos:
         language: script
         pass_filenames: true
         files: ''
-    hooks:
       - id: pytest
         name: pytest
         entry: bash -c 'PYTHONPATH=. pytest -q'
         language: system
         types: [python]
-    hooks:
       - id: shellcheck
         name: ShellCheck (bash)
         entry: shellcheck -x
+        language: system
+        types: [shell]
+      - id: shfmt
+        name: shfmt
+        entry: shfmt -w
         language: system
         types: [shell]
   - repo: https://github.com/astral-sh/ruff-pre-commit
@@ -33,4 +36,3 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-
