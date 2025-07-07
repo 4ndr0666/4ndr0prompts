@@ -2,11 +2,13 @@
 # SPDX-License-Identifier: MIT
 set -euo pipefail
 IFS=$'\n\t'
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-choice=$(bin/choose_prompt.sh)
+choice="$("$REPO_ROOT"/bin/choose_prompt.sh)"
 
 prompt=$(
-	python3 - "$choice" <<'PY'
+	PYTHONPATH="$REPO_ROOT" python3 - "$choice" <<'PY'
 import sys
 from canonical_loader import load_canonical
 from prompt_config import generate_prompt

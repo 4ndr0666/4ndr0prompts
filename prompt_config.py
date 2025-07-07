@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
-import yaml
+import json
 import os
 import random
 from typing import Dict
 
 _CACHE: dict[str, tuple[Dict[str, str], Dict[str, Dict[str, list]]]] = {}
 
-CONFIG_PATH = os.path.join(os.path.dirname(__file__), "data", "templates.yaml")
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), "dataset", "templates.json")
 
 
 def load_config(
@@ -23,7 +23,7 @@ def load_config(
     abspath = os.path.abspath(path)
     if abspath not in _CACHE:
         with open(abspath, "r", encoding="utf-8") as fh:
-            data = yaml.safe_load(fh)
+            data = json.load(fh)
         templates = data.get("templates", {})
         slots = data.get("slots", {})
         _CACHE[abspath] = (templates, slots)
