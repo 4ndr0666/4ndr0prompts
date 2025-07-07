@@ -16,6 +16,11 @@ dataset located in `dataset/templates.json`. Select a category when prompted and
 to your clipboard (if `xclip` is available).
 If `xclip` is missing the prompt will simply be printed to the terminal.
 
+### Clipboard behaviour on Arch
+
+On Arch Linux the scripts rely on `xclip` or `wl-copy` for clipboard access.
+If neither command is found, prompts are printed to stdout instead.
+
 ## Setup
 
 Run `make setup` to install Python requirements and common tooling such as

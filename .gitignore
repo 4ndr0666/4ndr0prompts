@@ -94,3 +94,7 @@ Thumbs.db
 .venv-codex/
 
 
+
+# Coverage
+.coverage
+coverage*/
