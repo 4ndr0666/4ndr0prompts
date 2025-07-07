@@ -1,3 +1,3 @@
 """Plugin package."""
-# SPDX-License-Identifier: MIT
 
+# SPDX-License-Identifier: MIT

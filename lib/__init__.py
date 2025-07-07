@@ -1,3 +1,3 @@
 """Library init."""
-# SPDX-License-Identifier: MIT
 
+# SPDX-License-Identifier: MIT

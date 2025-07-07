@@ -18,3 +18,4 @@ python scripts/parse_rawdata.py --write
 
 clean:
 find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
+

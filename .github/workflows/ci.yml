@@ -37,3 +37,4 @@ jobs:
       - name: Skip checks
         if: steps.changed.outputs.any_changed == 'false'
         run: echo "Documentation-only change; skipping checks."
+

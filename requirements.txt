@@ -3,3 +3,4 @@ prompt_toolkit
 pytest
 pytest-cov
 coverage
+

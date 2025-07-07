@@ -29,3 +29,4 @@ loading the dataset and plugins. Each script resolves its own directory using
 `SCRIPT_DIR="$(cd "$(dirname \"${BASH_SOURCE[0]}\")" && pwd)"` ensuring
 location agnostic execution. See `docs/ADR-0001.md` for full design
 decisions.
+

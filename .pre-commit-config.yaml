@@ -24,7 +24,7 @@ repos:
       - id: shellcheck
         name: ShellCheck (bash)
         entry: shellcheck -x
-        args: ['--preserve-executability']
+        args: [--preserve-executability]
         language: system
         types: [shell]
       - id: shfmt
