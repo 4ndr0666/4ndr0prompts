@@ -8,10 +8,19 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 choice="$("$REPO_ROOT"/bin/choose_prompt.sh)"
 
 prompt=$(
-	PYTHONPATH="$REPO_ROOT" python3 - "$choice" <<'PY'
+        PYTHONPATH="$REPO_ROOT" python3 - "$choice" <<'PY'
+import os
+import random
 import sys
 from canonical_loader import load_canonical
 from prompt_config import generate_prompt
+
+seed = os.environ.get("PROMPT_SEED")
+if seed is not None:
+    try:
+        random.seed(int(seed))
+    except ValueError:
+        pass
 
 templates, slots, _ = load_canonical()
 key = sys.argv[1]
