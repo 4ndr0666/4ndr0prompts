@@ -6,7 +6,6 @@ repos:
   - repo: local
     hooks:
       - id: codex-merge-clean
-        args: ['--preserve-executability']
         name: codex-merge-clean
         entry: 0-tests/codex-merge-clean.sh
         language: script
@@ -25,6 +24,7 @@ repos:
       - id: shellcheck
         name: ShellCheck (bash)
         entry: shellcheck -x
+        args: ['--preserve-executability']
         language: system
         types: [shell]
       - id: shfmt
