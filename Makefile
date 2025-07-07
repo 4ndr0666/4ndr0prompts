@@ -1,4 +1,4 @@
-.PHONY: setup test bats validate clean bench release-local
+.PHONY: setup test bats validate clean bench sbom release-local
 
 setup:
 		python3 -m pip install --upgrade pip
@@ -19,8 +19,12 @@ validate:
 clean:
 		find . -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true
 
+
 bench:
-		hyperfine -N 'PYTHONPATH=. python scripts/parse_rawdata.py --write'
+                hyperfine -N 'PYTHONPATH=. python scripts/parse_rawdata.py --write'
+
+sbom:
+                cyclonedx-py -o sbom.json
 
 release-local:
 		tar -czf prompts.tar.gz bin lib dataset plugins
