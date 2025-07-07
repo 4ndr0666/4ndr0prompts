@@ -15,7 +15,15 @@ jobs:
           python-version: '3.11'
       - name: Build tarball
         run: tar -czf prompts.tar.gz bin lib
+      - name: Build Docker image
+        run: docker build -t prompts .
+      - name: Generate SBOM
+        run: |
+          pip install cyclonedx-bom
+          cyclonedx-py -o sbom.xml
       - name: Upload Release
         uses: softprops/action-gh-release@v1
         with:
-          files: prompts.tar.gz
+          files: |
+            prompts.tar.gz
+            sbom.xml

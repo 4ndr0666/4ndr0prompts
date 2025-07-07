@@ -3,12 +3,13 @@
 set -euo pipefail
 IFS=$'\n\t'
 
-templates_file="${1:-data/templates.yaml}"
+choice=$(
+	python3 - <<'PY'
+from canonical_loader import list_categories
+for c in list_categories():
+    print(c)
+PY
+)
 
-if ! [ -f "$templates_file" ]; then
-	echo "Templates file not found: $templates_file" >&2
-	exit 1
-fi
-
-choice=$(grep -o '^[^:]*' "$templates_file" | fzf --prompt='Template > ' --height=40% --border) || exit 1
+choice=$(printf '%s\n' "$choice" | fzf --prompt='Category > ' --height=40% --border) || exit 1
 printf '%s\n' "$choice"

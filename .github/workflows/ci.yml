@@ -25,10 +25,15 @@ jobs:
       - name: Install deps
         if: steps.changed.outputs.any_changed == 'true'
         run: |
-          pip install pre-commit
+          sudo apt-get update -y
+          sudo apt-get install -y bats fzf shellcheck
+          pip install pre-commit pyyaml prompt_toolkit pytest-cov coverage
       - name: Run pre-commit
         if: steps.changed.outputs.any_changed == 'true'
         run: pre-commit run --show-diff-on-failure --color always --files ${{ steps.changed.outputs.all_changed_files }}
+      - name: Coverage XML
+        if: steps.changed.outputs.any_changed == 'true'
+        run: coverage xml
       - name: Skip checks
         if: steps.changed.outputs.any_changed == 'false'
         run: echo "Documentation-only change; skipping checks."
