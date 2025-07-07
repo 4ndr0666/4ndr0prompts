@@ -45,6 +45,7 @@ yarn-debug.log*
 target/
 *.dll
 bin/
+!bin/
 *.o
 *.ko
 *.a
