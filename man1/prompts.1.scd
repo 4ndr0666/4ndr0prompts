@@ -1,12 +1,8 @@
 #NAME
-prompts \- generate text prompts
+prompts \- interactive prompt builder
 
 #SYNOPSIS
 \fBprompts.sh\fR
 
 #DESCRIPTION
-Interactive wrapper that loads templates from
-\fIdataset/templates.json\fR and copies the result to the clipboard on
-Arch Linux via \fBxclip\fR. If \fBxclip\fR is unavailable the prompt is
-printed to standard output.
-
+Selects a value for each slot defined in \fIpromptlib.py\fR using \fBfzf\fR. The assembled string is copied to the Wayland clipboard using \fBwl-copy\fR.
