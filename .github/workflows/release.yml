@@ -14,7 +14,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Build tarball
-        run: tar -czf prompts.tar.gz bin lib
+        run: tar -czf prompts.tar.gz bin promptlib.py
       - name: Build Docker image
         run: docker build -t prompts .
       - name: Generate SBOM
@@ -27,4 +27,3 @@ jobs:
           files: |
             prompts.tar.gz
             sbom.xml
-

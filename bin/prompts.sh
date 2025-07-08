@@ -1,40 +1,46 @@
 #!/usr/bin/env bash
-# SPDX-License-Identifier: MIT
 set -euo pipefail
-IFS=$'\n\t'
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
-choice="$("$REPO_ROOT"/bin/choose_prompt.sh)"
+if ! command -v wl-copy >/dev/null 2>&1; then
+    printf '\033[31m[ERROR]\033[0m wl-copy not found. Install with `sudo pacman -S wl-clipboard`.\n' >&2
+    exit 1
+fi
 
-prompt=$(
-        PYTHONPATH="$REPO_ROOT" python3 - "$choice" <<'PY'
-import os
-import random
-import sys
-from canonical_loader import load_canonical
-from prompt_config import generate_prompt
+PYTHONPATH="$(cd "$(dirname "$0")/.." && pwd)"
 
-seed = os.environ.get("PROMPT_SEED")
-if seed is not None:
-    try:
-        random.seed(int(seed))
-    except ValueError:
-        pass
-
-templates, slots, _ = load_canonical()
-key = sys.argv[1]
-template = templates.get(key)
-slotset = slots.get(key, {})
-if template is None:
-    raise SystemExit(f"Unknown category: {key}")
-print(generate_prompt(template, slotset))
+mapfile -t slot_lines < <(python3 - <<'PY'
+from promptlib import SLOTS
+for k, vals in SLOTS.items():
+    print(f"{k}:{'|'.join(vals)}")
 PY
 )
 
-if command -v xclip >/dev/null 2>&1; then
-	printf '%s' "$prompt" | xclip -selection clipboard
-	echo "Copied to clipboard"
-else
-	printf '%s\n' "$prompt"
-fi
+declare -A selections
+for line in "${slot_lines[@]}"; do
+    slot=${line%%:*}
+    IFS='|' read -r -a opts <<< "${line#*:}"
+    choice=$(printf '%s\n' "${opts[@]}" | fzf --prompt="${slot}> " --height=40% --border) || exit 130
+    selections[$slot]=$choice
+done
+
+json="{"
+first=1
+for k in "${!selections[@]}"; do
+    v=${selections[$k]}
+    if [ $first -eq 0 ]; then json+=" ,"; fi
+    json+="\"$k\":\"$v\""; first=0
+done
+json+="}"
+
+prompt=$(SEL="$json" python3 - <<'PY'
+import os, json
+from collections import OrderedDict
+from promptlib import assemble_prompt
+sel=json.loads(os.environ['SEL'])
+print(assemble_prompt(OrderedDict((k, sel[k]) for k in sel)))
+PY
+)
+
+printf '%s\n' "$prompt"
+printf '%s' "$prompt" | wl-copy
+printf 'Copied to clipboard\n'

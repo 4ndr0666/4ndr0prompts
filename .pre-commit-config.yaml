@@ -5,12 +5,6 @@ repos:
       - id: check-executables-have-shebangs
   - repo: local
     hooks:
-      - id: codex-merge-clean
-        name: codex-merge-clean
-        entry: 0-tests/codex-merge-clean.sh
-        language: script
-        pass_filenames: true
-        files: ''
       - id: pytest
         name: pytest
         entry: bash -c 'PYTHONPATH=. pytest -q --cov=.'
@@ -18,7 +12,7 @@ repos:
         types: [python]
       - id: bats
         name: bats
-        entry: bash -c 'bats -r test/test_scripts.bats'
+        entry: bash -c 'bats -r tests/cli.bats'
         language: system
         types: [shell]
       - id: shellcheck
@@ -41,4 +35,3 @@ repos:
     rev: 25.1.0
     hooks:
       - id: black
-
