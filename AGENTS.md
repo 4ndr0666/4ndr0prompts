@@ -1,12 +1,14 @@
 <!-- ────────────────────────────────────────────────────────────────────── -->
-<!--  AGENTS.md  ·  Master Orchestration & Ticket Manifest                -->
-<!--  All {{VARIABLES}} have been resolved for main-branch commit.        -->
+<!--  AGENTS.md  ·  Minimal Orchestration Manifest (Post-Simplification)   -->
+<!--  For 4ndr0prompts: Pure FZF, Pure Slot-by-Slot, Pure Arch/Wayland     -->
 <!-- ────────────────────────────────────────────────────────────────────── -->
 
 # AGENTS — 4ndr0prompts
 
-> **Mission Statement**  
-> Provide an audit-grade, automation-ready ticket ledger and architectural blueprint that brings **4ndr0prompts** from its current **“pre-release”** state to a **stable, production-grade “release”** that meets modern Dev + Sec + Ops expectations while upholding the project’s guiding principles (minimalism, reproducibility, composability).
+> **Mission:**  
+> Build the world’s simplest, production-grade prompt builder for Sora/Hailuo.  
+> Launching `prompts.sh` starts the only supported mode: slot-by-slot prompt creation, with each canonical category handled via fzf, output preview, and instant clipboard copy via wl-copy.  
+> All logic, categories, slot order, and options are defined and enforced in promptlib.py—no other data source exists.
 
 *Repository*: <https://github.com/4ndr0666/4ndr0prompts>  
 *Generated*: 2025-07-07  
@@ -15,343 +17,215 @@
 ---
 
 ## 0 · Table of Contents
-1. [Executive Summary](#1--executive-summary)  
-2. [Current File Tree Snapshot](#2--current-file-tree-snapshot)  
-3. [Streams & Roles](#3--streams--roles)  
-4. [Ticket Matrix](#4--ticket-matrix)  
-5. [Detailed Ticket Specifications](#5--detailed-ticket-specifications)  
-6. [Roadmap & Sprint Cadence](#6--roadmap--sprint-cadence)  
-7. [Automation & Infrastructure Mandates](#7--automation--infrastructure-mandates)  
-8. [Approval Rubric (Go/No-Go)](#8--approval-rubric--go-no-go)  
-9. [Contribution Workflow](#9--contribution-workflow)  
-10. [Further Enhancements (Post-Release)](#10--further-enhancements--post-release)  
-11. [Glossary](#11--glossary)  
-12. [Appendix A — Ticket YAML Stub](#appendix-a--ticket-yaml-stub)  
-13. [Appendix B — ADR Template](#appendix-b--adr-template)  
+1. Executive Summary  
+2. Canonical File Tree Snapshot  
+3. Roles & Streams  
+4. Ticket Matrix  
+5. Detailed Ticket Specifications  
+6. Approval Rubric  
+7. Contribution Workflow  
+8. Further Enhancements  
+9. Glossary  
 
 ---
 
 ## 1 · Executive Summary
 
-4ndr0prompts currently operates in a **“pre-release”** state.  
-Critical gaps include:
+All prior modes, flags, or platform compatibility are removed.  
+`prompts.sh` is the only interface; it always launches the interactive builder.
 
-| Area                        | Gap Summary (high-level)                                                                                                                         |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Dataset Consistency**     | Dual YAML/JSON sources cause diverging behaviours; shell path still reads YAML while Python reads JSON.                                         |
-| **CI & Coverage**           | Bash (Bats) tests are not executed in CI; Python coverage ≈ 78 % (target ≥ 95 %).                                                                |
-| **Cross-platform UX**       | Clipboard support is Linux-only (`xclip`); macOS (pbcopy) and Windows (clip) are un-supported.                                                   |
-| **Documentation**           | README, MAN page and ADR-0001 are placeholders; developer onboarding is tribal knowledge.                                                       |
-| **Release Automation**      | No `release.yml` pipeline; no SBOM; no container image; no reproducible tarball.                                                                |
-| **Prompt UX Gaps**          | New **Sora-style slot template** exists only on paper; shell CLI cannot guide the user slot-by-slot.                                            |
-| **Security Hygiene**        | No dependency scanning; no signed artefacts; no threat-model document.                                                                          |
-| **Plugin Governance**       | Plugin discovery exists but no ADR nor validation; potential for malicious packs.                                                               |
-
-This AGENTS.md converts those observations into **actionable, cross-referenced work tickets** with acceptance criteria rigorous enough for compliance audits and production gating.
+- **Single command**: `./prompts.sh`
+- **Flow**: For each slot (in the order defined in promptlib.py), present options via fzf; require explicit selection.
+- **Output**: Preview assembled prompt.  
+- **Clipboard**: Copy final prompt to clipboard with `wl-copy` (Wayland-only).
+- **No fallback**: If `wl-copy` not found, exit with error and colored message.
+- **No plugins, no YAML/JSON, no shell flags, no alternate code paths.**
 
 ---
 
-## 2 · Current File Tree Snapshot
-> **Authoritative baseline for ticket scoping** – captured from `main@{2025-07-07}`
+## 2 · Canonical File Tree Snapshot
 
 ```
 
 .
-├── AGENTS.md                 # (this document)
+├── AGENTS.md
 ├── bin/
-│   ├── prompts.sh
-│   └── choose\_prompt.sh
-├── dataset/
-│   ├── templates.json
-│   ├── nsfwprompts.txt
-│   └── options.json
-├── plugins/                  # optional user packs
-├── prompt\_config.py
-├── canonical\_loader.py
-├── plugin\_loader.py
+│   └── prompts.sh
 ├── promptlib.py
-├── promptlib\_cli.py
-├── promptlib2.py
-├── scripts/
-│   └── parse\_rawdata.py
 ├── tests/
-│   ├── test\_python\_unit.py
-│   └── bats/
-│       └── cli.bats
-├── .github/workflows/
-│   └── ci.yml
-├── CHANGELOG.md
+│   ├── cli.bats
+│   └── test\_promptlib.py
 ├── README.md
-└── man1/
-└── prompts.1.scd
+├── man1/
+│   └── prompts.1.scd
+├── .gitignore
+└── Makefile
 
-````
-
-Files not listed above that appear during work **must be justified** in the relevant ticket and added to the next snapshot.
+```
 
 ---
 
-## 3 · Streams & Roles
+## 3 · Roles & Streams
 
-| Prefix | Stream / Role                | Core Responsibilities                                                                    |
-| ------ | ---------------------------- | ---------------------------------------------------------------------------------------- |
-| **ARC**| Architecture & Governance    | ADRs, high-level design, deviation control.                                              |
-| **SHE**| Shell Engineering            | POSIX scripts, `fzf` UX, cross-platform clipboard, ShellCheck.                           |
-| **PYL**| Python Library Engineering   | Prompt generation logic, dataset loaders, schema validation, template expansion.         |
-| **CI** | CI/CD Automation             | GitHub Actions, release pipeline, SBOM generation, artefact signing.                     |
-| **QA** | Quality & Security Assurance | Unit & shell tests, coverage enforcement, threat modelling, dependency scanning.         |
-| **DOC**| Documentation                | README, man-pages, diagrams, ADR authoring.                                              |
-| **INF**| Infrastructure & Ops         | Repo hygiene, Makefile, Docker image, `.gitignore`, cleanup, performance budgets.        |
+| Prefix | Stream           | Responsibilities                                         |
+|--------|------------------|---------------------------------------------------------|
+| SHE    | Shell Engineering| POSIX script, slot-by-slot fzf flow, clipboard copy     |
+| PYL    | Python Library   | Maintain promptlib.py, slot/category canonicalization   |
+| QA     | Quality Assurance| End-to-end test harness, bats/expect automation         |
+| DOC    | Documentation    | README, man-page, usage instructions                    |
+| INF    | Infrastructure   | Repo hygiene, Makefile, .gitignore, test runner         |
 
 ---
 
 ## 4 · Ticket Matrix
 
-> *Columns*: **ID · Stream · Title · Dependencies · Priority (P0–P4) · Est. hrs**
-
-| ID         | Stream | Title                                                            | Dependencies                | Prio | Est |
-| ---------- | ------ | ---------------------------------------------------------------- | --------------------------- | ---- | --- |
-| **50-001** | SHE    | Align CLI with unified dataset format                            | 10-005 · 10-004             | P0   | 3   |
-| **50-002** | DOC    | Complete README and usage docs                                   | 20-001                      | P0   | 4   |
-| **50-003** | SHE    | Cross-platform clipboard support (Linux/macOS/Win)               | 30-001                      | P1   | 4   |
-| **50-004** | CI     | Add release workflow & container build                           | 20-003 · 10-007             | P1   | 5   |
-| **50-005** | QA     | Integrate Bats & coverage in CI                                  | 10-006                      | P1   | 2   |
-| **50-006** | QA     | Generate SBOM and document threat model                          | 10-007                      | P2   | 3   |
-| **50-007** | ARC    | ADR-0001: Plugin system guidelines                               | 30-003                      | P2   | 2   |
-| **50-008** | PYL    | JSON-Schema validation for dataset                               | 30-002 · 50-001             | P3   | 3   |
-| **50-009** | PYL    | Implement “sora_closeup_portrait” template (+ slots)             | 50-001                      | P0   | 2   |
-| **50-010** | SHE    | Slot-by-slot interactive UX for `prompts.sh`                     | 50-009                      | P0   | 3   |
-| **60-001** | INF    | Add `.gitignore` and repo hygiene                                | 10-001                      | P1   | 1   |
-| **60-002** | DOC    | Finalize Man-page (`prompts.1.scd`)                              | 20-002 · 50-002             | P1   | 2   |
-| **60-003** | INF    | Implement `make setup` & Makefile                                | 50-002                      | P1   | 2   |
-| **60-004** | INF    | Purge stale `__pycache__` directories                            | 50-001                      | P1   | 1   |
-| **60-005** | QA     | End-to-end integration tests (shell ⇄ python parity)             | 50-005 · 50-010             | P1   | 3   |
-| **60-006** | DOC    | Finalize Architecture ADR (`ADR-0001.md`)                        | 50-007                      | P1   | 2   |
-| **60-007** | INF    | Clean dataset directory (remove `nsfwprompts.txt` if unused)     | 50-001                      | P2   | 1   |
-| **60-008** | INF    | Dataset YAML↔JSON conversion script                              | 50-001                      | P2   | 2   |
-| **70-001** | SHE    | Universal script-path resolution (`SCRIPT_DIR` fix)              | 60-001                      | P0   | 2   |
+| ID       | Stream | Title                                            | Prio | Est. hrs |
+|----------|--------|--------------------------------------------------|------|----------|
+| 100-001  | SHE    | Pure slot-by-slot interactive prompts.sh         | P0   | 3        |
+| 100-002  | SHE    | Enforce wl-copy only; error if missing           | P0   | 1        |
+| 100-003  | PYL    | Canonicalize slot list/order in promptlib.py     | P0   | 2        |
+| 100-004  | QA     | Bats/expect: test slot sequence and clipboard    | P0   | 2        |
+| 100-005  | DOC    | Trim README/man-page to minimal usage flow       | P0   | 1        |
+| 100-006  | INF    | Purge legacy files and .gitignore cleanup        | P0   | 1        |
 
 ---
 
 ## 5 · Detailed Ticket Specifications
-Below are **full, audit-grade** descriptions. Copy each section verbatim into a GitHub Issue so the acceptance checklist is preserved.
 
 ---
 
-### 50-001 · SHE · Align CLI with unified dataset format
-**Goal** – Provide a single source of truth (SSOT) for templates & slots across shell and Python codepaths.
+### 100-001 · SHE · Pure slot-by-slot interactive prompts.sh
 
-| Item                              | Requirement                                                                                              |
-| --------------------------------- | --------------------------------------------------------------------------------------------------------- |
-| **Refactor Scope**                | `bin/prompts.sh`, `bin/choose_prompt.sh`, `prompt_config.py`, `canonical_loader.py`                      |
-| **Functional Change**             | Shell scripts must read the same JSON file used by Python (`dataset/templates.json`).                    |
-| **Placeholder Style**             | Adopt `[slot_name]` syntax **only**; strip any legacy `{slot}` variants.                                 |
-| **Flag Symmetry**                 | `prompts.sh --category sora_closeup_portrait` should output identical text to `promptlib.py` for same template / slot selections. |
-| **Regression Tests**              | 1× golden sample per existing template; run via Bats.                                                    |
-| **Docs**                          | README section “Editing datasets” updated with JSON example + jq snippet.                                |
+**Goal:**  
+Rewrite `bin/prompts.sh` so it always performs slot-by-slot prompting, with no optional flags or modes.
 
-**Acceptance Criteria**
+**Scope:**  
+- When invoked, prompts user for each slot (in order from promptlib.py) using fzf.
+- Each slot's options are extracted directly from promptlib.py (via python call).
+- Assembles prompt, displays preview, copies via wl-copy.
+- If user aborts, exit with code 130 and display warning.
 
-- [ ] `bin/prompts.sh` prints the template list when invoked with no args.  
-- [ ] Selecting a template followed by random slot choices generates a prompt identical (string equality) to Python path.  
-- [ ] `make test` passes golden-sample diff check.  
-- [ ] No YAML files remain as authoritative data; if legacy YAML exists it is removed or moved to `archive/`.  
-- [ ] CI pipeline green.
+**Acceptance:**  
+- [ ] Running `./prompts.sh` presents each slot in canonical order.
+- [ ] All values are user-selected via fzf; default selection is first entry.
+- [ ] Final prompt shown in terminal, then copied to clipboard with wl-copy.
 
 ---
 
-### 50-002 · DOC · Complete README and usage docs
-**Goal** – On-board a new contributor in < 5 min.
+### 100-002 · SHE · Enforce wl-copy only; error if missing
 
-**Tasks**
+**Goal:**  
+Remove all clipboard tool detection except wl-copy.
 
-1. Expand **Quick-Start** (Linux, macOS, Windows PowerShell).  
-2. Add **Architecture diagram** (PlantUML or Mermaid).  
-3. Document **dataset structure** and how to add templates.  
-4. Link to ADR-0001 and to ticket backlog.
+**Scope:**  
+- Only support wl-copy for clipboard copy.
+- If not found, exit with `[ERROR]` in red and suggest `sudo pacman -S wl-clipboard`.
 
-**Acceptance**
-
-- [ ] Clone + run section works verbatim on GitHub Codespaces (Ubuntu).  
-- [ ] Diagram renders in GitHub Markdown.  
-- [ ] Spell-checker (`codespell`) passes.
-
-*… (all remaining tickets 50-003 → 70-001 follow the same structured block; omitted for brevity but MUST be included in the committed file) …*
+**Acceptance:**  
+- [ ] Final prompt copied if wl-copy exists.
+- [ ] If not, script aborts with clear message; nothing is written to clipboard.
 
 ---
 
-### 50-009 · PYL · Implement “sora_closeup_portrait” template (+ slots)
-**Context** — A Sora-style close-up portrait template and slot taxonomy were drafted by Product.  
-**Goal** — Materialise this template into `dataset/templates.json` with robust slot coverage.
+### 100-003 · PYL · Canonicalize slot list/order in promptlib.py
 
-#### Deliverables
-| File                                  | Action                          |
-| ------------------------------------- | ------------------------------- |
-| `dataset/templates.json`              | Add `"sora_closeup_portrait"` in `"templates"` map. |
-| `dataset/templates.json`              | Add `"sora_closeup_portrait"` slot map under `"slots"`. |
-| `CHANGELOG.md`                        | `feat: add sora_closeup_portrait template` entry. |
-| `tests/test_sora_template.py`         | Unit test: **all placeholders replaced** after `generate_prompt`. |
+**Goal:**  
+Enforce one and only one slot/category list/order in promptlib.py.
 
-#### Slot Keys (minimum list)
+**Scope:**  
+- All slot names, allowed values, and order defined in a single list or OrderedDict in promptlib.py.
+- No YAML/JSON/data files needed for runtime.
 
-| Slot        | Example Values (seed)                                                                                 |
-| ----------- | ----------------------------------------------------------------------------------------------------- |
-| `camera`    | `"A close-up"`, `"An extreme close-up"`, `"A medium close-up"`                                         |
-| `subject`   | `"a young woman with long, light-brown hair and natural makeup"`, `"a teenage boy with freckles"`, … |
-| `action`    | `"She sticks out her tongue playfully"`, `"He grimaces in mock disgust"`, …                           |
-| `lighting`  | `"Soft, warm key-light highlights the face"`, `"Cool rim-light separates the subject"`, …            |
-| `background`| `"on a neutral studio backdrop"`, `"in a bustling café"`, …                                           |
-| `mood`      | `"casual and light-hearted"`, `"intimate and reflective"`                                             |
-
-#### Acceptance Criteria
-- [ ] Running `python promptlib.py --category sora_closeup_portrait --count 5` produces 5 syntactically valid prompts (no `[slot]` remnants).  
-- [ ] `python -m jsonschema` validation (ticket 50-008) passes.  
-- [ ] Bats test confirms shell & Python output equality for a fixed RNG seed.  
+**Acceptance:**  
+- [ ] `promptlib.py` exports the full slot list (e.g., `SLOTS = [...]`).
+- [ ] All slot option lists are unique, complete, and validated at import.
 
 ---
 
-### 50-010 · SHE · Slot-by-slot interactive UX for `prompts.sh`
-**Goal** – Interactive flow: present each slot, let user choose via `fzf`, preserve order.
+### 100-004 · QA · Bats/expect: test slot sequence and clipboard
 
-#### Functional Requirements
-1. **Slot Discovery** – Use Python one-liner or `jq` to print slot keys **in JSON order**.  
-2. **Value Selection** – Pipe list to `fzf --prompt "[slot] > "`; default to “random” if user presses *Enter*.  
-3. **Abort Safety** – If user CTRL-C or ESC at any prompt, exit with code 130 & explanatory message.  
-4. **Clipboard** – On success, copy final prompt to clipboard (post-ticket 50-003 cross-platform wrapper).
+**Goal:**  
+Automate slot-by-slot flow in test harness.
 
-#### Non-functional
-- Linted by ShellCheck with zero warnings (`SC2000-SC2999`).  
-- Works on POSIX sh (no Bash arrays).
+**Scope:**  
+- Bats or expect script simulates answering each fzf prompt (use first entry).
+- Verifies that output matches expected slot ordering and is copied to clipboard.
+- If `wl-paste` is available, test confirms clipboard content matches prompt.
 
-#### Acceptance
-- [ ] Manual run recorded in `tests/bats/interactive.bats` (simulated with `expect`).  
-- [ ] Time-to-first-prompt ≤ 1 s on GitHub runner (bench job).  
+**Acceptance:**  
+- [ ] `make test` or CI run passes all tests, including clipboard assertion.
 
 ---
 
-*(Detailed specs continue for every ticket; ensure ≥10 k characters total)*
+### 100-005 · DOC · Trim README/man-page to minimal usage flow
+
+**Goal:**  
+No fluff, just minimal usage.
+
+**Scope:**  
+- Remove all reference to non-Arch, non-Wayland, non-wl-copy setups.
+- Show one usage example: `./prompts.sh` (interactive).
+- Document each slot and its possible values, referencing promptlib.py.
+
+**Acceptance:**  
+- [ ] README and man-page have ≤ 200 lines each.
+- [ ] No irrelevant or out-of-date info present.
 
 ---
 
-## 6 · Roadmap & Sprint Cadence
+### 100-006 · INF · Purge legacy files and .gitignore cleanup
 
-| Sprint | Target Focus                                            | Primary Tickets                                          | Duration |
-| ------ | ------------------------------------------------------- | -------------------------------------------------------- | -------- |
-| **1**  | Dataset/CLI unification · Docs skeleton · CI + Bats     | 50-001 · 50-002 · 50-005 · 50-009 · 50-010 · 60-001 · 70-001 | 2 weeks |
-| **2**  | Cross-platform UX · Release automation · Threat model   | 50-003 · 50-004 · 50-006 · 60-002 · 60-005                  | 2 weeks |
-| **3**  | Plugin ADR · Schema validation                          | 50-007 · 50-008 · 60-006                                    | 2 weeks |
-| **4**  | Infra cleanup · Dataset converter                       | 60-004 · 60-007 · 60-008                                    | 1 week  |
+**Goal:**  
+Clean as the code: only keep what’s essential.
 
-Total projected effort ≈ 54 engineering hours over 7 weeks.
+**Scope:**  
+- Remove all unneeded JSON/YAML, legacy scripts, test artefacts, or cross-platform helpers.
+- Add .gitignore lines for pycache, logs, editor backups, and venvs.
 
----
-
-## 7 · Automation & Infrastructure Mandates
-
-| Domain               | Requirement                                                                                           |
-| -------------------- | ------------------------------------------------------------------------------------------------------ |
-| **CI**               | Matrix jobs: `lint`, `test`, `bats`, `coverage`, `docker-build`, `bench`.                              |
-| **Pre-commit**       | Hooks: Ruff, Black, ShellCheck, shfmt, pytest, bats, coverage ≥ 95 %.                                  |
-| **Docker**           | Alpine base, final image < 10 MB, push to GHCR on tag.                                                 |
-| **SBOM**             | CycloneDX JSON; uploaded as artefact and signed with Cosign.                                           |
-| **Makefile**         | Targets: `setup`, `validate`, `test`, `clean`, `bench`, `release`.                                     |
-| **Benchmark Budget** | `hyperfine` on `bin/prompts.sh` cold-start; fail if > 50 ms average on GitHub runner.                  |
-| **Secrets**          | PAT with `GITHUB_TOKEN` scope for release; stored in Actions secrets; rotated quarterly.               |
+**Acceptance:**  
+- [ ] Only AGENTS.md, bin/prompts.sh, promptlib.py, README.md, man1/prompts.1.scd, tests/, .gitignore, Makefile remain.
+- [ ] Repo is clean after `make clean`.
 
 ---
 
-## 8 · Approval Rubric (Go/No-Go)
+## 6 · Approval Rubric
 
-| Area                     | Threshold / Condition                                                   | Verification                                               |
-| ------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------- |
-| **Unit + Shell Tests**   | ≥ 95 % statement coverage; 100 % critical paths                         | `pytest --cov`, `coverage.xml` + Bats coverage plugin      |
-| **Static Analysis**      | 0 Ruff errors; 0 ShellCheck SC2000-SC2999 warnings                      | Pre-commit and CI gates                                    |
-| **Build Determinism**    | Docker image & tarball SHA-256 reproducible across two CI runs          | CI step `digest-compare`                                   |
-| **Performance**          | Prompt pipeline < 50 ms average (hyperfine, 3 runs)                     | CI `bench` job                                             |
-| **Security**             | SBOM produced; grype scan shows 0 High/Critical CVEs in image-deps      | CI `security-scan` job                                     |
-| **Docs**                 | README + MAN + ADR compile; Quick-Start script works on fresh Docker    | Maintainer manual check                                    |
-
-Any failed row blocks the release.
+| Area          | Threshold                | Audit Method      |
+|---------------|-------------------------|-------------------|
+| Flow          | Only slot-by-slot mode  | Manual/test run   |
+| Clipboard     | Only wl-copy; no xclip  | CLI + bats/expect |
+| Slot Options  | Only from promptlib.py  | Code review       |
+| Tests         | ≥95% coverage           | CI                |
+| Docs          | Minimal and accurate    | Doc review        |
 
 ---
 
-## 9 · Contribution Workflow
-1. **Fork** → `feat/<ticket-id>-short-slug`.  
-2. Run `make setup`; ensure pre-commit installed.  
-3. Implement; sign commits (`git commit -s`).  
-4. `pre-commit run --all-files` must pass.  
-5. Push → open PR; label with **Stream** & ticket-ID.  
-6. CI must be green + code-owner review.  
-7. Squash-merge; semantic-release auto-tags if tag commit message present.
+## 7 · Contribution Workflow
+
+1. Branch (`feat/<id>-short-title`)
+2. `make test` before commit
+3. PR with `[SHE]`, `[PYL]`, `[QA]`, etc. in title
+4. Pass code-owner review and CI
+5. Merge
 
 ---
 
-## 10 · Further Enhancements (Post-Release)
+## 8 · Further Enhancements
 
-| Idea                         | Value Proposition                                  | Effort | Notes                        |
-| ---------------------------- | -------------------------------------------------- | ------ | ---------------------------- |
-| **fzf preview pane**         | Live diff of slot replacement for transparency     | M      | Use `bat` for colour output  |
-| **Template versioning**      | Rollback prompt packs via Git tags                 | L      | Requires ADR-0002            |
-| **Web UI (Textual/Flask)**   | GUI for non-terminal users                         | M      | Optional, behind `--serve`   |
-| **Plugin Marketplace**       | Discover & rate community prompt packs             | L      | Security & curation needed   |
-| **Telemetry (opt-in)**       | Anonymised prompt selection stats for UX tuning    | L      | Requires GDPR compliance     |
-| **IDE Extension**            | VS Code snippet generator                          | M      | Leverage Language Server     |
+- If you need “plugins”/“packs”, add a single future ticket:  
+  **Support plugin pack loading from a single Markdown or Python module.**
+- If Sora/Hailuo API integration needed, new ticket:  
+  **Add HTTP endpoint for direct Sora upload (optional, after slot-by-slot is rock solid).**
 
 ---
 
-## 11 · Glossary
+## 9 · Glossary
 
-| Term / Acronym | Definition                                                                                |
-| -------------- | ----------------------------------------------------------------------------------------- |
-| **ADR**        | Architecture Decision Record – design-time rationale document.                            |
-| **SBOM**       | Software Bill of Materials – dependency inventory (CycloneDX JSON).                       |
-| **LoE**        | Level of Effort – estimated engineering hours.                                            |
-| **Stream**     | Functional domain prefix used in ticket IDs (ARC, SHE, …).                                |
-| **Template**   | Prompt text containing slot placeholders.                                                 |
-| **Slot**       | Placeholder variable replaced at generation time.                                         |
-| **Bats**       | Bash Automated Testing System – shell unit tests.                                         |
-| **fzf**        | Command-line fuzzy-finder used for interactive selection.                                 |
-
----
-
-## Appendix A — Ticket YAML Stub
-```yaml
-id: 50-999
-stream: SHE
-title: Example Ticket Title
-dependencies: []
-priority: P3
-est_hours: 2
-description: |
-  One-paragraph overview of the ticket goal.
-acceptance_criteria:
-  - Bullet list of measurable outcomes.
-deliverables:
-  - Code file(s) updated
-  - Documentation updated
-notes: |
-  Optional free-form notes, context, or implementation hints.
-````
-
-## Appendix B — ADR Template
-
-```md
-# ADR-????  –  <Short Decision Title>
-Status: {Proposed | Accepted | Deprecated}
-Date: YYYY-MM-DD
-
-## Context
-Describe the forces at play, business or technical constraints, and why this decision matters now.
-
-## Decision
-Explicitly state the decision taken and its scope.
-
-## Consequences
-Discuss positive outcomes, negative outcomes, trade-offs, and any follow-ups.
-
-## Alternatives Considered
-Enumerate other options and why they were rejected.
-```
+- **Slot:** Category/question (e.g., Age, Gender, Lighting)
+- **fzf:** Command-line fuzzy finder
+- **wl-copy:** Wayland clipboard utility
+- **promptlib.py:** The only source of slot/category logic and allowed values
+- **Bats:** Bash Automated Testing System
 
 ---
 
