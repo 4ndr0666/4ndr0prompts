@@ -5,7 +5,7 @@
 * **Goal:** Ensure slot-by-slot fzf-based interactive mode with wl-copy clipboard only.
 * **Acceptance Criteria:**
 
-  * Prompts each slot in order as defined in `promptlib.py`.
+  * Prompts each slot in order as aggregated /home/git/clone/4ndr0prompts/plugins/prompts1.md.
   * Copies final assembled prompt via `wl-copy`.
   * Exits gracefully with error if `wl-copy` is missing.
 
@@ -13,10 +13,10 @@
 
 ### 📌 **200-002 · PYL · Validate Slot Canonicalization (`promptlib.py`)**
 
-* **Goal:** Ensure slots/categories defined once in Python, no external YAML/JSON.
+* **Goal:** Ensure slots/categories are directly aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md and defined once in Python, no external YAML/JSON.
 * **Acceptance Criteria:**
 
-  * Defines `SLOTS` clearly with slot-order enforced.
+  * Defines `SLOTS` clearly with slot-order enforced and directly aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md.
   * Raises errors on duplicates or invalid values.
   * No external data files required at runtime.
 
@@ -39,7 +39,6 @@
 * **Acceptance Criteria:**
 
   * README.md clearly describes interactive-only usage.
-  * Lists slots explicitly or references promptlib.py clearly.
   * Provides install guidance for `fzf`, `wl-clipboard` on Arch Linux.
   * Document size ≤ 200 lines.
 
@@ -72,8 +71,7 @@
 * **Goal:** Purge redundant files; finalize `.gitignore`.
 * **Acceptance Criteria:**
 
-  * Remove unused scripts (`canonical_loader.py`, `plugin_loader.py`) if plugins unsupported.
-  * Remove unused plugin markdown files.
+  * Remove unused scripts.
   * Update `.gitignore` to exclude Python cache, editor artifacts, and build files (`__pycache__/`, `*.pyc`, `.ruff_cache`, etc.).
 
 ---
@@ -181,8 +179,8 @@ notes: |
 ```markdown
 # ADR-0001 – Minimal Slot-by-Slot Interactive Flow with Wayland-Only Clipboard
 
-**Status:** Accepted  
-**Date:** YYYY-MM-DD  
+**Status:** Accepted
+**Date:** YYYY-MM-DD
 
 ## Context
 Prior iterations included complexity (plugins, cross-platform clipboards). Project goals emphasize minimalism, simplicity, and precise control.
