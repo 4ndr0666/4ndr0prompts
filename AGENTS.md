@@ -1,13 +1,32 @@
 # 🗒️ **AGENTS**
 
-## Task Tickets for Codex
+## Ticket AssignmentsTask for Codex
+
+**Current File Tree Snapshot**
+
+```
+├── AGENTS.md
+├── canonical_loader.py
+├── dataset
+│   ├── prompts1.md
+│   └── redteam_dataset.txt
+├── plugin_loader.py
+├── promptlib.py
+├── prompts.sh
+└── __pycache__
+    └── promptlib.cpython-313.pyc
+```
+
+3 directories, 8 files
+
+---
 
 ### 📌 **200-001 · SHE · Complete CLI (`prompts.sh`)**
 
 * **Goal:** Ensure slot-by-slot fzf-based interactive mode with wl-copy clipboard only.
 * **Acceptance Criteria:**
 
-  * Prompts each slot in order as aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md.
+  * Prompts each slot in order as aggregated from /dataset/prompts1.txt.
   * Copies final assembled prompt via `wl-copy`.
   * Exits gracefully with error if `wl-copy` is missing.
 
@@ -15,11 +34,10 @@
 
 ### 📌 **200-002 · PYL · Validate Slot Canonicalization (`promptlib.py`)**
 
-* **Goal:** Ensure all slots/categories have been derived from /home/git/clone/4ndr0prompts/plugins/prompts1.md and defined once in Python, no external YAML/JSON.
+* **Goal:** Ensure every possible slots/categories have been aggegated from the dataset /dataset/prompts1.txt and defined once in Python, no external YAML/JSON.
 * **Acceptance Criteria:**
 
-  * All categories have been defined along with their coinciding SLOTS.
-  * The categories are directly derived from the aggregated dataset in /home/git/clone/4ndr0prompts/plugins/prompts1.md.
+  * All categories align with the aggregated dataset along with their coinciding SLOTS.
   * Defines `SLOTS` clearly with slot-order enforced.
   * Raises errors on duplicates or invalid values.
   * No external data files required at runtime.
