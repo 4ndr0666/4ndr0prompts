@@ -370,23 +370,58 @@ def load_redteam_dataset(path: str | None = None) -> str:
     lines = data.splitlines()
     seen: set[bytes] = set()
 
+    orientation_kw = [
+        "turn around",
+        "turns around",
+        "turned around",
+        "turns her back",
+        "facing backwards",
+        "facing away",
+        "back view",
+        "back to camera",
+        "backs to the camera",
+        "backwards to the camera",
+        "espalda",
+    ]
+    pose_kw = [
+        "lean forward",
+        "leaning forward",
+        "kneels",
+        "kneel",
+        "kneeling",
+        "squat",
+        "squats",
+        "squatting",
+        "sitting",
+        "sits",
+        "lying",
+        "lying down",
+        "on all fours",
+        "legs splayed",
+        "legs apart",
+        "legs open",
+        "bend over",
+        "bends over",
+        "bending over",
+        "lunge",
+        "lunge forward",
+        "crouch",
+        "crouching",
+        "viennese oyster",
+    ]
+
+
     for bline in lines:
         if not bline.strip() or bline in seen:
             continue
         seen.add(bline)
         line = bline.decode("utf-8")
         lowered = line.lower()
-        if (
-            "turn around" in lowered
-            or "turns around" in lowered
-            or "back view" in lowered
-            or "back to camera" in lowered
-            or "espalda" in lowered
-        ):
+        if any(k in lowered for k in orientation_kw):
             ORIENTATION_OPTIONS.append(line)
-        elif any(k in lowered for k in ("lean forward", "kneels", "kneel")):
+        elif any(k in lowered for k in pose_kw):
             POSE_TAGS.append(line)
-        elif "opens mouth" in lowered or "sucking" in lowered:
+        elif any(k in lowered for k in ("opens mouth", "sucking", "tongue", "drools", "grop", "dances")):
             ACTION_SEQUENCE_OPTIONS.append(line)
         else:
             ACTION_SEQUENCE_OPTIONS.append(line)
@@ -569,26 +604,6 @@ SUBJECT_REFERENCE_RULES: Dict[str, str] = {
 
 # ==============================================================================
 # 10. POLICY-FORBIDDEN TERMS (full union of all lists)
-# ==============================================================================
-POLICY_FORBIDDEN_TERMS: List[str] = [
-    "sexual",
-    "porn",
-    "gore",
-    "torture",
-    "rape",
-    "beheading",
-    "extremist",
-    "hate",
-    "terror",
-    "celebrity",
-    "trademark",
-    "copyright",
-    "threat",
-    "defamation",
-    "harassment",
-    "self-harm",
-    "medical_advice",
-]
 
 
 # ==============================================================================
