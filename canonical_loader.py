@@ -94,7 +94,7 @@ class CanonicalParamLoader:
         return str(value) in options
 
     def assemble_prompt_block(self, data: Dict[str, Any]) -> str:
-        """Assemble a Hailuo-compliant prompt block from ``data``."""
+        """Assemble a canonical prompt block from ``data``."""
         self._check_reload()
         required = [
             "subject",
