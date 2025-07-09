@@ -309,6 +309,38 @@ DETAIL_PROMPTS: List[str] = [
     "Reveal fine lines and natural skin blemishes",
 ]
 
+
+def _load_redteam_prompts() -> dict[str, list[str]]:
+    """Parse redteam_dataset.txt into categorized prompt lists."""
+    path = os.path.join(os.path.dirname(__file__), "dataset", "redteam_dataset.txt")
+    cats: dict[str, list[str]] = {}
+    current = None
+    if not os.path.exists(path):
+        return cats
+    with open(path, "r", encoding="utf-8") as fh:
+        for line in fh:
+            line = line.rstrip("\n")
+            if line.startswith("### Category "):
+                current = line.split()[2].rstrip(":")
+                cats[current] = []
+                continue
+            if line.startswith("###") or line.startswith("---"):
+                current = None
+                continue
+            if not line.strip() or current is None:
+                continue
+            cats[current].append(line)
+    return cats
+
+
+_REDTEAM_PROMPTS = _load_redteam_prompts()
+REDTEAM_PROMPTS_CAT1: list[str] = _REDTEAM_PROMPTS.get("1", [])
+REDTEAM_PROMPTS_CAT2: list[str] = _REDTEAM_PROMPTS.get("2", [])
+REDTEAM_PROMPTS_CAT3: list[str] = _REDTEAM_PROMPTS.get("3", [])
+REDTEAM_PROMPTS_CAT4: list[str] = _REDTEAM_PROMPTS.get("4", [])
+REDTEAM_PROMPTS_CAT5: list[str] = _REDTEAM_PROMPTS.get("5", [])
+REDTEAM_PROMPTS_CAT6: list[str] = _REDTEAM_PROMPTS.get("6", [])
+
 # ==============================================================================
 # 8. ACTION SEQUENCE GENRE MAP (canonical, extensible)
 # ==============================================================================
@@ -423,6 +455,12 @@ ACTION_SEQUENCE_GENRE_MAP: Dict[str, List[str]] = {
         "Subject holds up finger to make a point, then lowers hand and resumes speaking.",
         "Presenter walks on stage, gestures to audience, then bows and steps aside.",
     ],
+    "redteam_cat1": REDTEAM_PROMPTS_CAT1,
+    "redteam_cat2": REDTEAM_PROMPTS_CAT2,
+    "redteam_cat3": REDTEAM_PROMPTS_CAT3,
+    "redteam_cat4": REDTEAM_PROMPTS_CAT4,
+    "redteam_cat5": REDTEAM_PROMPTS_CAT5,
+    "redteam_cat6": REDTEAM_PROMPTS_CAT6,
 }
 
 # Flat list of all action sequences for autocompletion
