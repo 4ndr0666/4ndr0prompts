@@ -19,63 +19,63 @@ This is a **living project contract**: all tickets, pull requests, and changes m
 
 ### 2.1 **Modality and Dynamic Loading**
 
-* All agent logic **MUST** use dynamic slot/category assignment from the current canonical dataset at runtime (see `promptlib.py`, plugin YAML/MD, or datasets).
-* Agent slot options and categories (pose, lighting, lens, camera_move, environment, shadow, detail, etc.) **MUST** be loaded programmatically and never hard-coded in the CLI.
-* Agent parameters **MUST** hot-reload if any dataset file is modified, added, or removed.
-* **Redteam data integrity:** All prompts from `redteam_dataset.txt` **MUST** be ingested and presented verbatim—including all misspellings, malformed words, nonstandard grammar, and adversarial constructs. **No spellcheck, grammar correction, or content “cleanup” is permitted at any step.**  
-  *This is a foundational security requirement: the dataset’s adversarial and edge-case authenticity must never be compromised or normalized by automation or agent.*
+* All slot/category lists (pose, lighting, lens, camera_move, environment, shadow, detail, etc.) **MUST** be dynamically loaded at runtime from the current canonical dataset (`promptlib.py`, plugin YAML/MD, or datasets), never hard-coded.
+* Any change to dataset, plugin, or slot definitions **MUST** be hot-reloaded in the CLI.
+* **Critical:**  
+    - **`redteam_dataset.txt` must be ingested and slotted verbatim.**
+    - **No spellchecking, typo correction, or normalization is allowed.**  
+      Misspellings, malformed words, and adversarial entries **must** be preserved as-is for adversarial testing integrity.
 
-### 2.2 **Interface and CLI Automation**
+### 2.2 **CLI Automation & Slot Assignment**
 
 * Only the main CLI script (e.g., `prompts.sh` or `canonical_cli.py`) is permitted to instantiate agents.
-* **prompt_toolkit** or equivalent interactive libraries **MUST** be required and auto-installed by the CLI prior to interactive use.
-* **Menus and slot completion** must always use fuzzy completers (WordCompleter or equivalent) for all slot/category prompts to support large datasets and arbitrary plugin packs.
-* All prompts and slot data (including misspellings, adversarial samples, or malformed entries) **MUST** be presented verbatim.
-* All errors must be colorized and actionable, using project-wide color/style constants (cf. `#15FFFF` highlight).
-* All CLI automation logic **MUST** remain in the main script. Never move style/UI logic to new files or imports.
+* Interactive slot/category menus **MUST** use dynamic fuzzy completers that reflect current, live slot values.
+* All prompt data from any dataset or plugin, including malformed and misspelled entries, **MUST** be shown verbatim to users/agents—no cleaning or formatting.
+* CLI errors and messages must be colorized using `#15FFFF` or the project highlight.
+* All slot and prompt assignment logic **MUST** reside in the main script; do not offload to plugins or submodules.
 
 ---
 
 ## 3. **Security and Policy Compliance**
 
-* No prompt, slot, or action may contain a restricted or forbidden policy term (as defined in `promptlib.py` and any OpenAI compliance references).
-* Agents **MUST** enforce all subject-reference, policy, and platform rules at the point of prompt construction.
-* Security research and adversarial robustness **ALWAYS** take precedence over user convenience or feature expedience.
-* All error and policy violation messages must be explicit, colorized, and halt downstream actions.
+* **Policy Enforcement:**  
+    - No prompt, slot, or action may contain a restricted or forbidden term (see `promptlib.py` and policy docs).
+    - Policy and subject-reference rules **MUST** be enforced at prompt assembly.
+* **Redteam Integrity:**  
+    - At every stage, the integrity of redteam/adversarial prompts is **paramount**—no normalization, correction, or filtering of content from `redteam_dataset.txt` is allowed.
+* All errors and violations must be colorized, explicit, and must prevent further processing.
 
 ---
 
 ## 4. **Testing, Validation, and Quality Gates**
 
-* All UI and menu flows must be covered by tests (see `test_promptlib.py`).
-* **Tests MUST validate:**
-
-  * Each slot/category is present, dynamically loaded, and reflects all current dataset/plugin entries
-  * Fuzzy completion, input, and error handling logic
-  * Policy compliance for all user and plugin data
-  * Edge case handling (malformed data, plugin hot-reload, dataset mutation)
-* All code and documentation **MUST** be ruff/black (Python) and shellcheck (Bash) clean.
-* **Pre-commit hooks** are required to enforce style, import order, and policy gating.
+* **Tests required for:**
+    - Dynamic slot loading
+    - Menu/input flows
+    - Policy/subject reference compliance
+    - Fuzzy completion and input handling
+    - Edge cases (malformed data, hot-reload, dataset mutation)
+* **All slot lists must be unique, deduped, and reflect 100% of all current dataset/plugin entries.**
+* All code must pass `ruff` and `black` (Python) and `shellcheck` (Bash).
+* **Pre-commit hooks are required** for style and compliance gating.
 
 ---
 
 ## 5. **Work Ticketing and Review Process**
 
-### 5.1 **Workstream Requirements**
+### 5.1 **Ticketing**
 
-* All new features, refactors, or bugfixes must be logged as tickets referencing relevant AGENTS.md sections.
-* Tickets **MUST** include:
+* All new features, changes, or bugfixes **MUST** be logged as tickets referencing AGENTS.md by section and clause.
+* Each ticket must state:
+    - Purpose and impact (e.g. “Slot expansion for action_sequence from new plugins”)
+    - Affected scripts/files
+    - Validation and testing plan
+    - Expected agent/user change
 
-  * Clear statement of intent (e.g., “Add new action_sequence slot from plugin ingestion”)
-  * Affected modules/files/scripts
-  * Testing and validation steps
-  * Expected user or agent experience change
+### 5.2 **Review & Audit**
 
-### 5.2 **Review and Audit**
-
-* No PR/merge is permitted without automated and peer validation against this contract.
-* All review comments and tickets **MUST** use section references for traceability.
-* Deviation from canonical workflow **MUST** be justified in the ticket and approved by majority review.
+* No merge/PR is allowed without automated and peer validation against AGENTS.md.
+* Deviations from canonical workflow must be explained in ticket, approved by majority, and cross-referenced here.
 
 ---
 
@@ -83,63 +83,82 @@ This is a **living project contract**: all tickets, pull requests, and changes m
 
 A version is “production-ready” only if:
 
-* [ ] All slot/category options hot-reload at runtime from any updated dataset, YAML, MD, or plugin file (see `canonical_loader.py`)
-* [ ] The main CLI enforces colorized, actionable errors, with no fallback or silent failure
-* [ ] All prompt generation, category/slot ingestion, and menu flows are **100% automated** from current datasets and tested for adversarial input
-* [ ] All test suites pass on a clean container environment (CI/CD gating)
-* [ ] README and help/usage docs reflect actual live options and agent behaviors
-* [ ] Security and compliance tests pass with no forbidden content or subject-reference violations
-* [ ] No duplicate, stale, or hard-coded values remain in the codebase
-* [ ] Ticket log and AGENTS.md cross-reference all recent changes for audit traceability
+* [ ] All slots/categories load and reload dynamically from all datasets, plugins, and MD/YAML files
+* [ ] The CLI enforces colorized, actionable errors with no fallback or silent failure
+* [ ] Prompt generation, menu flows, and slot assignment are **100% automated** and reflect all adversarial/test input
+* [ ] All tests pass in CI/CD on a clean container
+* [ ] All documentation (README/help) matches current code and agent behavior
+* [ ] Security and compliance tests pass
+* [ ] No stale/hardcoded/duplicate slot values exist in codebase
+* [ ] Tickets/PRs reference this AGENTS.md for traceability
 
 ---
 
 ## 7. **Escalation and Exception Handling**
 
-* Any new CLI mode, slot, or UI/UX workflow **MUST** be justified and approved with measurable security or performance gain.
-* Any change to agent dynamic loading, dataset structure, or plugin interface **MUST** update this contract and trigger a full test pass before deployment.
-* Proposals to break monolithic structure **MUST** be documented with clear benchmarks, profiling output, and audit log references.
+* Any CLI, slot, or workflow change must have measurable security or performance gain, documented and reviewed here.
+* Any change to dynamic loading, dataset/plugin interface, or slot structure must update AGENTS.md and trigger full re-test.
+* Any proposal to break structure must include profiling/benchmarking and audit references.
 
 ---
 
 ## 8. **Further Enhancements & Roadmap**
 
-* **Plugin pack registry:** Support for auto-discovering and registering new slot/category packs from external sources.
-* **Dataset audit trail:** Full logging of dataset/plugin ingestion events with before/after diffs and policy filter results.
-* **Contextual slot validation:** Runtime user hints if input does not match canonical slot values (without blocking exploration/edge cases).
-* **Metrics:** CLI-level metrics/logging for menu performance, plugin reload times, and error rates.
-* **Multi-agent orchestration:** Blueprint for parallel agent workflows for batch prompt construction, red team attack vector synthesis, and slot mutation testing.
+* Plugin registry for auto-discovery of slot/category packs
+* Full dataset/plugin audit logs, with before/after diffs
+* Runtime slot validation hints for user input (without blocking adversarial entries)
+* CLI-level metrics for performance and reloads
+* Multi-agent orchestration for batch prompt building and attack vector synthesis
 
 ---
 
 ## 9. **Governance, Amendments, and Living Document Status**
 
-This AGENTS.md is a living technical contract.
-
-* All contributors are responsible for reviewing and updating relevant sections with each substantive change.
-* All tickets, PRs, and issues must reference AGENTS.md by section and paragraph number.
-* Major amendments must be reviewed, signed off, and versioned in the repo log.
+* All contributors must update this contract with any substantive project change.
+* All PRs/issues must reference AGENTS.md section/paragraph.
+* Major amendments must be signed off and versioned in the repo.
 
 ---
 
-### **Current File Tree Snapshot**
+## 10. **Machine-Actionable Slot Expansion Protocol**
+
+### **Dynamic Slot Expansion**
+
+- All canonical slots are defined in `promptlib.py:SLOT_MAP`.  
+- On ingestion, **every unique prompt from `redteam_dataset.txt` and other sources** must be assigned to one or more slots **verbatim**.
+    - Example:  
+      - If a prompt describes “back to camera,” add it to `orientation` (even if misspelled).
+      - If a prompt is an action sequence, assign to `action_sequence`.
+      - If ambiguous, assign to `detail` as a catch-all.
+- For slots like `orientation`, **expand options beyond current three values**.  
+    - Slot must contain every real orientation found in the data (e.g., "side profile", "overhead", "from behind", etc.).
+
+### **VERBATIM DATA INTEGRITY CLAUSE**
+
+- **Every prompt from `redteam_dataset.txt` must be transcribed and slotted exactly as-is, without spellcheck, correction, or normalization.**
+    - *Any agent or human who normalizes or corrects redteam content breaks the adversarial test pipeline and must be removed from the merge/review process.*
+    - This is a “break glass” escalation event.
+
+---
+
+## 11. **Current File Tree Snapshot**
 
 ```
 
 /mnt/data/
-├── redteam\_dataset.txt           # Full edge/adversarial prompt set (category headers, many body/camera/action/orientation details; must be transcribed VERBATIM)
-├── promptlib.py                  # Canonical promptlib (SLOT\_MAP categories, but with limited options for some slots)
-├── canonical\_loader.py           # Loader for canonical slot data, hot-reload capable
-├── test\_promptlib.py             # Test harness for slot validation/order
-├── plugin\_loader.py              # Plugin extractor for MD files
-├── README.md                     # Usage overview for scripts and workflow
-├── prompts1.md                   # Additional prompt block definitions
-├── prompts.sh                    # CLI prompt builder script (Wayland/clipboard)
-├── (plus: \*.yaml plugins, possibly more prompt blocks)
+├── redteam\_dataset.txt           # Full adversarial prompt set (all prompts must be slotted verbatim)
+├── promptlib.py                  # Canonical slot and prompt definitions (must be exhaustively expanded from all sources)
+├── canonical\_loader.py           # Loader/hot-reload logic
+├── test\_promptlib.py             # Test harness
+├── plugin\_loader.py              # Plugin/MD extractor
+├── README.md                     # Usage/docs
+├── prompts1.md                   # Additional prompt blocks
+├── prompts.sh                    # CLI prompt builder (Wayland/clipboard)
+├── \*.yaml                        # Plugin packs
 
 ```
 
 ---
 
 **MANDATORY REDTEAM CLAUSE:**  
-> **At no point may automation, agent, or human contributors modify, spellcheck, normalize, or “improve” any prompt text from `redteam_dataset.txt`. All misspellings, grammar errors, and adversarial content must remain 100% verbatim throughout all ingestion, slotting, and CLI output. Any deviation breaks the core security research and project contract, and must trigger an immediate escalation and ticket review.**
+> **At no point may any automation, agent, or human contributor modify, spellcheck, normalize, or “improve” any prompt text from `redteam_dataset.txt`. All misspellings, grammar errors, and adversarial content must remain 100% verbatim throughout ingestion, slotting, and CLI output. Violation triggers immediate escalation and removal from the workflow.**
