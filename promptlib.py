@@ -410,6 +410,7 @@ def load_redteam_dataset(path: str | None = None) -> str:
         "viennese oyster",
     ]
 
+
     for bline in lines:
         if not bline.strip() or bline in seen:
             continue
@@ -603,26 +604,6 @@ SUBJECT_REFERENCE_RULES: Dict[str, str] = {
 
 # ==============================================================================
 # 10. POLICY-FORBIDDEN TERMS (full union of all lists)
-# ==============================================================================
-POLICY_FORBIDDEN_TERMS: List[str] = [
-    "sexual",
-    "porn",
-    "gore",
-    "torture",
-    "rape",
-    "beheading",
-    "extremist",
-    "hate",
-    "terror",
-    "celebrity",
-    "trademark",
-    "copyright",
-    "threat",
-    "defamation",
-    "harassment",
-    "self-harm",
-    "medical_advice",
-]
 
 
 # ==============================================================================
