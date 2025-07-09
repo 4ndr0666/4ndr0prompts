@@ -1,6 +1,6 @@
 # prompts.sh
 
-Interactive prompt builder for Sora/Hailuo workflows. The script asks for each slot in sequence and copies the final prompt to the clipboard using `wl-copy`.
+Interactive prompt builder for cinematic workflows. The script asks for each slot in sequence and copies the final prompt to the clipboard using `wl-copy`.
 
 ## Usage
 
