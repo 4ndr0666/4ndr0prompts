@@ -430,6 +430,35 @@ ACTION_SEQUENCE_OPTIONS: List[str] = []
 for _genre, _seqs in ACTION_SEQUENCE_GENRE_MAP.items():
     ACTION_SEQUENCE_OPTIONS.extend(_seqs)
 
+# Canonical slot ordering and mapping
+SLOT_MAP: Dict[str, List[str]] = {
+    "age_group": AGE_GROUP_OPTIONS,
+    "gender": GENDER_OPTIONS,
+    "orientation": ORIENTATION_OPTIONS,
+    "expression": EXPRESSION_OPTIONS,
+    "pose": POSE_TAGS,
+    "action_sequence": ACTION_SEQUENCE_OPTIONS,
+    "lighting": LIGHTING_OPTIONS,
+    "shadow": SHADOW_OPTIONS,
+    "lens": LENS_OPTIONS,
+    "camera_move": CAMERA_OPTIONS,
+    "shot_framing": SHOT_FRAMING_OPTIONS,
+    "environment": ENVIRONMENT_OPTIONS,
+    "detail": DETAIL_PROMPTS,
+}
+
+SLOTS: List[str] = list(SLOT_MAP.keys())
+
+
+def validate_slots() -> None:
+    """Validate slot lists for duplicates and emptiness."""
+    for name, values in SLOT_MAP.items():
+        if len(values) != len(set(values)):
+            raise ValueError(f"Duplicate values in slot '{name}'")
+        if not values:
+            raise ValueError(f"Slot '{name}' has no values")
+
+
 # ==============================================================================
 # 9. SUBJECT-REFERENCE RULES (Hailuo compliance, deduped)
 # ==============================================================================
@@ -965,6 +994,9 @@ __all__ = [
     "EXPRESSION_OPTIONS",
     "SHOT_FRAMING_OPTIONS",
     "ACTION_SEQUENCE_OPTIONS",
+    "SLOT_MAP",
+    "SLOTS",
+    "validate_slots",
     "LIGHTING_OPTIONS",
     "LIGHTING_PROFILES",
     "LENS_OPTIONS",

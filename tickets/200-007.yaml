@@ -1,0 +1,16 @@
+id: 200-007
+stream: INF
+title: Repository Hygiene & Cleanup
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Purge redundant files and finalize .gitignore.
+acceptance_criteria:
+  - Remove unused files/directories.
+  - Update .gitignore to exclude caches and build files.
+deliverables:
+  - .gitignore
+  - cleaned repository
+notes: |
+  Remove __pycache__ and stray artifacts.

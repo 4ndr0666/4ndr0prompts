@@ -1,0 +1,18 @@
+id: 200-002
+stream: PYL
+title: Validate Slot Canonicalization (promptlib.py)
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Ensure every possible slot/category has been aggregated from the dataset and defined once in Python.
+acceptance_criteria:
+  - All categories align with aggregated dataset.
+  - Defines SLOTS clearly with slot-order enforced.
+  - Raises errors on duplicates or invalid values.
+  - No external data files required at runtime.
+deliverables:
+  - promptlib.py
+  - tests/test_promptlib.py
+notes: |
+  Dataset located at dataset/prompts1.md.

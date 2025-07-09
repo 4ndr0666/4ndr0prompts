@@ -1,0 +1,5 @@
+[run]
+omit =
+    canonical_loader.py
+    plugin_loader.py
+    promptlib.py
