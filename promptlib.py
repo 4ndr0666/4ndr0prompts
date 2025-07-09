@@ -468,7 +468,6 @@ ACTION_SEQUENCE_OPTIONS: List[str] = []
 for _genre, _seqs in ACTION_SEQUENCE_GENRE_MAP.items():
     ACTION_SEQUENCE_OPTIONS.extend(_seqs)
 
-
 # Canonical slot ordering and mapping
 SLOT_MAP: Dict[str, List[str]] = {
     "age_group": AGE_GROUP_OPTIONS,
