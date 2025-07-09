@@ -1,0 +1,16 @@
+id: 200-004
+stream: DOC
+title: Minimal README and Usage Docs
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Provide succinct instructions for new users on Arch Linux.
+acceptance_criteria:
+  - README.md describes interactive-only usage.
+  - Includes install guidance for fzf and wl-clipboard.
+  - Document size \u2264 200 lines.
+deliverables:
+  - README.md
+notes: |
+  Keep documentation minimal.

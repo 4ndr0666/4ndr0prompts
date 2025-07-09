@@ -1,0 +1,17 @@
+id: 200-001
+stream: SHE
+title: Complete CLI (prompts.sh)
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Ensure slot-by-slot fzf-based interactive mode with wl-copy clipboard only.
+acceptance_criteria:
+  - Prompts each slot in order as aggregated from /dataset/prompts1.txt.
+  - Copies final assembled prompt via wl-copy.
+  - Exits gracefully with error if wl-copy is missing.
+deliverables:
+  - prompts.sh
+  - tests/cli.bats
+notes: |
+  Initial minimal CLI implementation.

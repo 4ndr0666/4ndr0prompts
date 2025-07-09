@@ -1,0 +1,16 @@
+id: 200-006
+stream: INF
+title: Add Development Automation (Makefile)
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Provide essential automation tasks.
+acceptance_criteria:
+  - Targets: make test, make clean, make setup.
+  - make clean removes all test/build artifacts.
+  - make test executes full test suite successfully.
+deliverables:
+  - Makefile
+notes: |
+  Integrate with CI.

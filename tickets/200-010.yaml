@@ -1,0 +1,15 @@
+id: 200-010
+stream: ARC
+title: Document Minimal Architecture Decision (ADR)
+dependencies: []
+priority: P0
+est_hours: 1
+description: |
+  Document minimal slot-by-slot approach and Wayland-only clipboard.
+acceptance_criteria:
+  - ADR explains minimal interactive flow with wl-copy.
+  - Includes rationale and future implications.
+deliverables:
+  - docs/adr/minimal_wayland_only.md
+notes: |
+  Follow provided ADR template.
