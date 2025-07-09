@@ -1,220 +1,145 @@
-# 🗒️ **AGENTS**
+## 1. **Purpose and Scope**
 
-## Ticket AssignmentsTask for Codex
+This document governs all agent-based, automation, and dynamic CLI orchestration logic for this project.
+It defines:
 
-**Current File Tree Snapshot**
+* Canonical agent behavior and design principles
+* Slot/category-driven workflow requirements
+* Dataset ingestion and runtime parameterization
+* Security, audit, and compliance mandates
+* Testing, validation, and review protocols
+* Ticket structure, workstream, and escalation
+* Explicit deviation/extension protocol for future contributions
+
+This is a **living project contract**: all tickets, pull requests, and changes must reference relevant sections herein.
+
+---
+
+## 2. **Agent Design and Behavior**
+
+### 2.1 **Modality and Dynamic Loading**
+
+* All agent logic **MUST** use dynamic slot/category assignment from the current canonical dataset at runtime (see `promptlib.py`, plugin YAML/MD, or datasets).
+* Agent slot options and categories (pose, lighting, lens, camera_move, environment, shadow, detail, etc.) **MUST** be loaded programmatically and never hard-coded in the CLI.
+* Agent parameters **MUST** hot-reload if any dataset file is modified, added, or removed.
+* **Redteam data integrity:** All prompts from `redteam_dataset.txt` **MUST** be ingested and presented verbatim—including all misspellings, malformed words, nonstandard grammar, and adversarial constructs. **No spellcheck, grammar correction, or content “cleanup” is permitted at any step.**  
+  *This is a foundational security requirement: the dataset’s adversarial and edge-case authenticity must never be compromised or normalized by automation or agent.*
+
+### 2.2 **Interface and CLI Automation**
+
+* Only the main CLI script (e.g., `prompts.sh` or `canonical_cli.py`) is permitted to instantiate agents.
+* **prompt_toolkit** or equivalent interactive libraries **MUST** be required and auto-installed by the CLI prior to interactive use.
+* **Menus and slot completion** must always use fuzzy completers (WordCompleter or equivalent) for all slot/category prompts to support large datasets and arbitrary plugin packs.
+* All prompts and slot data (including misspellings, adversarial samples, or malformed entries) **MUST** be presented verbatim.
+* All errors must be colorized and actionable, using project-wide color/style constants (cf. `#15FFFF` highlight).
+* All CLI automation logic **MUST** remain in the main script. Never move style/UI logic to new files or imports.
+
+---
+
+## 3. **Security and Policy Compliance**
+
+* No prompt, slot, or action may contain a restricted or forbidden policy term (as defined in `promptlib.py` and any OpenAI compliance references).
+* Agents **MUST** enforce all subject-reference, policy, and platform rules at the point of prompt construction.
+* Security research and adversarial robustness **ALWAYS** take precedence over user convenience or feature expedience.
+* All error and policy violation messages must be explicit, colorized, and halt downstream actions.
+
+---
+
+## 4. **Testing, Validation, and Quality Gates**
+
+* All UI and menu flows must be covered by tests (see `test_promptlib.py`).
+* **Tests MUST validate:**
+
+  * Each slot/category is present, dynamically loaded, and reflects all current dataset/plugin entries
+  * Fuzzy completion, input, and error handling logic
+  * Policy compliance for all user and plugin data
+  * Edge case handling (malformed data, plugin hot-reload, dataset mutation)
+* All code and documentation **MUST** be ruff/black (Python) and shellcheck (Bash) clean.
+* **Pre-commit hooks** are required to enforce style, import order, and policy gating.
+
+---
+
+## 5. **Work Ticketing and Review Process**
+
+### 5.1 **Workstream Requirements**
+
+* All new features, refactors, or bugfixes must be logged as tickets referencing relevant AGENTS.md sections.
+* Tickets **MUST** include:
+
+  * Clear statement of intent (e.g., “Add new action_sequence slot from plugin ingestion”)
+  * Affected modules/files/scripts
+  * Testing and validation steps
+  * Expected user or agent experience change
+
+### 5.2 **Review and Audit**
+
+* No PR/merge is permitted without automated and peer validation against this contract.
+* All review comments and tickets **MUST** use section references for traceability.
+* Deviation from canonical workflow **MUST** be justified in the ticket and approved by majority review.
+
+---
+
+## 6. **Production Release Checklist**
+
+A version is “production-ready” only if:
+
+* [ ] All slot/category options hot-reload at runtime from any updated dataset, YAML, MD, or plugin file (see `canonical_loader.py`)
+* [ ] The main CLI enforces colorized, actionable errors, with no fallback or silent failure
+* [ ] All prompt generation, category/slot ingestion, and menu flows are **100% automated** from current datasets and tested for adversarial input
+* [ ] All test suites pass on a clean container environment (CI/CD gating)
+* [ ] README and help/usage docs reflect actual live options and agent behaviors
+* [ ] Security and compliance tests pass with no forbidden content or subject-reference violations
+* [ ] No duplicate, stale, or hard-coded values remain in the codebase
+* [ ] Ticket log and AGENTS.md cross-reference all recent changes for audit traceability
+
+---
+
+## 7. **Escalation and Exception Handling**
+
+* Any new CLI mode, slot, or UI/UX workflow **MUST** be justified and approved with measurable security or performance gain.
+* Any change to agent dynamic loading, dataset structure, or plugin interface **MUST** update this contract and trigger a full test pass before deployment.
+* Proposals to break monolithic structure **MUST** be documented with clear benchmarks, profiling output, and audit log references.
+
+---
+
+## 8. **Further Enhancements & Roadmap**
+
+* **Plugin pack registry:** Support for auto-discovering and registering new slot/category packs from external sources.
+* **Dataset audit trail:** Full logging of dataset/plugin ingestion events with before/after diffs and policy filter results.
+* **Contextual slot validation:** Runtime user hints if input does not match canonical slot values (without blocking exploration/edge cases).
+* **Metrics:** CLI-level metrics/logging for menu performance, plugin reload times, and error rates.
+* **Multi-agent orchestration:** Blueprint for parallel agent workflows for batch prompt construction, red team attack vector synthesis, and slot mutation testing.
+
+---
+
+## 9. **Governance, Amendments, and Living Document Status**
+
+This AGENTS.md is a living technical contract.
+
+* All contributors are responsible for reviewing and updating relevant sections with each substantive change.
+* All tickets, PRs, and issues must reference AGENTS.md by section and paragraph number.
+* Major amendments must be reviewed, signed off, and versioned in the repo log.
+
+---
+
+### **Current File Tree Snapshot**
 
 ```
-├── AGENTS.md
-├── canonical_loader.py
-├── dataset
-│   ├── prompts1.md
-│   └── redteam_dataset.txt
-├── plugin_loader.py
-├── promptlib.py
-├── prompts.sh
-└── __pycache__
-    └── promptlib.cpython-313.pyc
-```
 
-3 directories, 8 files
+/mnt/data/
+├── redteam\_dataset.txt           # Full edge/adversarial prompt set (category headers, many body/camera/action/orientation details; must be transcribed VERBATIM)
+├── promptlib.py                  # Canonical promptlib (SLOT\_MAP categories, but with limited options for some slots)
+├── canonical\_loader.py           # Loader for canonical slot data, hot-reload capable
+├── test\_promptlib.py             # Test harness for slot validation/order
+├── plugin\_loader.py              # Plugin extractor for MD files
+├── README.md                     # Usage overview for scripts and workflow
+├── prompts1.md                   # Additional prompt block definitions
+├── prompts.sh                    # CLI prompt builder script (Wayland/clipboard)
+├── (plus: \*.yaml plugins, possibly more prompt blocks)
 
----
-
-### 📌 **200-001 · SHE · Complete CLI (`prompts.sh`)**
-
-* **Goal:** Ensure slot-by-slot fzf-based interactive mode with wl-copy clipboard only.
-* **Acceptance Criteria:**
-
-  * Prompts each slot in order as aggregated from /dataset/prompts1.txt.
-  * Copies final assembled prompt via `wl-copy`.
-  * Exits gracefully with error if `wl-copy` is missing.
-
----
-
-### 📌 **200-002 · PYL · Validate Slot Canonicalization (`promptlib.py`)**
-
-* **Goal:** Ensure every possible slots/categories have been aggegated from the dataset /dataset/prompts1.txt and defined once in Python, no external YAML/JSON.
-* **Acceptance Criteria:**
-
-  * All categories align with the aggregated dataset along with their coinciding SLOTS.
-  * Defines `SLOTS` clearly with slot-order enforced.
-  * Raises errors on duplicates or invalid values.
-  * No external data files required at runtime.
-
----
-
-### 📌 **200-003 · QA · Restore Bats Test Suite (`tests/cli.bats`)**
-
-* **Goal:** Automate interactive flow testing.
-* **Acceptance Criteria:**
-
-  * Simulates user input for each slot via dummy `fzf`.
-  * Verifies clipboard functionality via `wl-copy` simulation (`wl-paste`).
-  * All tests pass via `make test`.
-
----
-
-### 📌 **200-004 · DOC · Minimal README and Usage Docs**
-
-* **Goal:** Provide succinct, accurate instructions for new users.
-* **Acceptance Criteria:**
-
-  * README.md clearly describes interactive-only usage.
-  * Provides install guidance for `fzf`, `wl-clipboard` on Arch Linux.
-  * Document size ≤ 200 lines.
-
----
-
-### 📌 **200-005 · DOC · Create Minimal Man-page (`man1/prompts.1.scd`)**
-
-* **Goal:** Provide minimal Unix-standard documentation.
-* **Acceptance Criteria:**
-
-  * Concise, ≤100 lines describing usage.
-  * Matches README precisely.
-  * Compiles cleanly with `scdoc`.
-
----
-
-### 📌 **200-006 · INF · Add Development Automation (`Makefile`)**
-
-* **Goal:** Provide essential automation tasks.
-* **Acceptance Criteria:**
-
-  * Targets: `make test`, `make clean`, `make setup`.
-  * `make clean` removes all test/build artifacts.
-  * `make test` executes full test suite successfully.
-
----
-
-### 📌 **200-007 · INF · Repository Hygiene & Cleanup**
-
-* **Goal:** Purge redundant files; finalize `.gitignore`.
-* **Acceptance Criteria:**
-
-  * Remove unused files/directories.
-  * Update `.gitignore` to exclude Python cache, editor artifacts, and build files (`__pycache__/`, `*.pyc`, `.ruff_cache`, etc.).
-
----
-
-### 📌 **200-008 · INF · Restore AGENTS.md**
-
-* **Goal:** Provide canonical audit-grade task ledger.
-* **Acceptance Criteria:**
-
-  * AGENTS.md clearly defines sprint goals, tasks, and acceptance criteria.
-  * Reflects exactly the minimal requirements and approach.
-
----
-
-### 📌 **200-009 · CI · Verify GitHub Actions Workflows**
-
-* **Goal:** Confirm and simplify CI pipelines.
-* **Acceptance Criteria:**
-
-  * CI runs linting (`ruff`), shell checks (`shellcheck`), Python and shell tests.
-  * Remove or adjust `release.yml` if Docker/SBOM not supported in minimal approach.
-
----
-
-### 📌 **200-010 · ARC · Document Minimal Architecture Decision (ADR)**
-
-* **Goal:** Clearly document minimalism and Wayland-only approach.
-* **Acceptance Criteria:**
-
-  * ADR (`docs/adr/minimal_wayland_only.md`) explains minimal slot-by-slot, fzf, wl-copy-only decisions.
-  * Includes rationale and future implications.
-
----
-
-## 📅 **Sprint Cadence Recommendation**
-
-| Sprint | Targets                               | Tickets                            | Duration |
-| ------ | ------------------------------------- | ---------------------------------- | -------- |
-| 1      | Restore minimal CLI, slots, and tests | 200-001, 200-002, 200-003, 200-004 | 1 week   |
-| 2      | Documentation, automation & cleanup   | 200-005, 200-006, 200-007, 200-008 | 1 week   |
-| 3      | CI verification and ADR documentation | 200-009, 200-010                   | 1 week   |
-
----
-
-## ✅ **Approval Rubric (Go/No-Go)**
-
-| Area           | Threshold / Condition              | Verification              |
-| -------------- | ---------------------------------- | ------------------------- |
-| CLI Flow       | Only interactive slot-by-slot mode | Manual & automated tests  |
-| Clipboard      | Only wl-copy supported             | Test verification         |
-| Tests          | 95% coverage                       | pytest-cov, Bats coverage |
-| Docs           | Clear, ≤200 lines README           | Doc review                |
-| Infrastructure | Clean Makefile & .gitignore        | Repo hygiene checks       |
-
-Any failing item results in a **no-go** for final release.
-
----
-
-## 🌱 **Further Enhancements (Post-Release)**
-
-After the minimal system is stable:
-
-* **fzf preview pane** integration with syntax highlighting.
-* **Optional Markdown plugin loading** (if community requests).
-* **Sora/Hailuo direct API upload integration** (optional future feature).
-
----
-
-## 📘 **Glossary**
-
-| Term        | Definition                    |
-| ----------- | ----------------------------- |
-| **fzf**     | Command-line fuzzy finder     |
-| **wl-copy** | Wayland clipboard utility     |
-| **slot**    | Individual prompt category    |
-| **Bats**    | Bash Automated Testing System |
-| **ADR**     | Architecture Decision Record  |
-
----
-
-## 🗂️ **Ticket YAML Stub (Example for GitHub issues)**
-
-```yaml
-id: 200-XXX
-stream: SHE
-title: Short Descriptive Ticket Title
-dependencies: []
-priority: P0
-est_hours: 1
-description: |
-  Clearly describe the task and its scope in detail.
-acceptance_criteria:
-  - Bullet point measurable outcomes
-deliverables:
-  - List any files to update or create
-  - Include documentation changes
-notes: |
-  Additional context or guidance
 ```
 
 ---
 
-## 📑 **ADR Template (Architecture Decision Record)**
-
-```markdown
-# ADR-0001 – Minimal Slot-by-Slot Interactive Flow with Wayland-Only Clipboard
-
-**Status:** Accepted
-**Date:** YYYY-MM-DD
-
-## Context
-Prior iterations included complexity (plugins, cross-platform clipboards). Project goals emphasize minimalism, simplicity, and precise control.
-
-## Decision
-Implement a single interactive mode via fzf, slot-by-slot prompt creation defined solely by Python (promptlib.py). Support only Wayland clipboard (wl-copy).
-
-## Consequences
-- Simplicity: Easier maintenance and fewer edge-cases.
-- Limited Compatibility: Only Arch Linux with Wayland supported initially.
-- Future extension points remain clear and incremental.
-
-## Alternatives Considered
-- Multi-platform clipboard support (discarded for complexity).
-- Plugin support via external files (deferred for future consideration).
+**MANDATORY REDTEAM CLAUSE:**  
+> **At no point may automation, agent, or human contributors modify, spellcheck, normalize, or “improve” any prompt text from `redteam_dataset.txt`. All misspellings, grammar errors, and adversarial content must remain 100% verbatim throughout all ingestion, slotting, and CLI output. Any deviation breaks the core security research and project contract, and must trigger an immediate escalation and ticket review.**
