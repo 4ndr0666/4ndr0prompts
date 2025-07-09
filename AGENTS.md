@@ -1,11 +1,13 @@
-## 🗒️ **Sprint Tasks**
+# 🗒️ **AGENTS**
 
-### 📌 **200-001 · SHE · Restore Minimal CLI (`bin/prompts.sh`)**
+## Task Tickets for Codex
+
+### 📌 **200-001 · SHE · Complete CLI (`prompts.sh`)**
 
 * **Goal:** Ensure slot-by-slot fzf-based interactive mode with wl-copy clipboard only.
 * **Acceptance Criteria:**
 
-  * Prompts each slot in order as aggregated /home/git/clone/4ndr0prompts/plugins/prompts1.md.
+  * Prompts each slot in order as aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md.
   * Copies final assembled prompt via `wl-copy`.
   * Exits gracefully with error if `wl-copy` is missing.
 
@@ -13,10 +15,12 @@
 
 ### 📌 **200-002 · PYL · Validate Slot Canonicalization (`promptlib.py`)**
 
-* **Goal:** Ensure slots/categories are directly aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md and defined once in Python, no external YAML/JSON.
+* **Goal:** Ensure all slots/categories have been derived from /home/git/clone/4ndr0prompts/plugins/prompts1.md and defined once in Python, no external YAML/JSON.
 * **Acceptance Criteria:**
 
-  * Defines `SLOTS` clearly with slot-order enforced and directly aggregated from /home/git/clone/4ndr0prompts/plugins/prompts1.md.
+  * All categories have been defined along with their coinciding SLOTS.
+  * The categories are directly derived from the aggregated dataset in /home/git/clone/4ndr0prompts/plugins/prompts1.md.
+  * Defines `SLOTS` clearly with slot-order enforced.
   * Raises errors on duplicates or invalid values.
   * No external data files required at runtime.
 
@@ -71,7 +75,7 @@
 * **Goal:** Purge redundant files; finalize `.gitignore`.
 * **Acceptance Criteria:**
 
-  * Remove unused scripts.
+  * Remove unused files/directories.
   * Update `.gitignore` to exclude Python cache, editor artifacts, and build files (`__pycache__/`, `*.pyc`, `.ruff_cache`, etc.).
 
 ---
