@@ -1,0 +1,11 @@
+ const TRIGGER_WORDS = [
+    "anal","asshole","anus","areola","areolas","blowjob","boobs","bounce","bouncing","breast","breasts",
+    "bukake","buttcheeks","butt","cheeks","climax","clit","cleavage","cock","corridas","crotch","cum","cums","culo"
+    "deep","deepthroat","ddick","dick","esperma","fat ass","fellatio","fingering","fuck","fucked","horny","lick","masterbate",
+    "masterbating","member","meco","moan","moaning","nipple","nsfw","oral","orgasm","penis","phallus","pleasure",
+    "pussy","rump","semen","slut","splooge","squeezing","squeeze","suck","sucking","swallow","throat","throating",
+    "tits","titfuck","titties","tittydrop","tittyfuck","titfuck","vagina","wiener","whore","creampie","cumshot","cunnilingus",
+    "doggystyle","ejaculate","ejaculation","handjob","jerk off","labia","nude","orgy","porn","prolapse",
+    "rectum","rimjob","sesual","stripper","submissive","teabag","threesome","vibrator","voyeur"
+  ];
+
