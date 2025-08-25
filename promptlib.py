@@ -410,7 +410,6 @@ def load_redteam_dataset(path: str | None = None) -> str:
         "viennese oyster",
     ]
 
-
     for bline in lines:
         if not bline.strip() or bline in seen:
             continue
@@ -421,7 +420,10 @@ def load_redteam_dataset(path: str | None = None) -> str:
             ORIENTATION_OPTIONS.append(line)
         elif any(k in lowered for k in pose_kw):
             POSE_TAGS.append(line)
-        elif any(k in lowered for k in ("opens mouth", "sucking", "tongue", "drools", "grop", "dances")):
+        elif any(
+            k in lowered
+            for k in ("opens mouth", "sucking", "tongue", "drools", "grop", "dances")
+        ):
             ACTION_SEQUENCE_OPTIONS.append(line)
         else:
             ACTION_SEQUENCE_OPTIONS.append(line)
@@ -436,6 +438,7 @@ def load_redteam_dataset(path: str | None = None) -> str:
     SLOT_MAP["action_sequence"] = ACTION_SEQUENCE_OPTIONS
 
     return sha256
+
 
 # ==============================================================================
 # 8. ACTION SEQUENCE GENRE MAP (canonical, extensible)
@@ -1134,7 +1137,7 @@ ORIENTATION_OPTIONS[:] = _dedupe_preserve_order(ORIENTATION_OPTIONS)
 EXPRESSION_OPTIONS[:] = _dedupe_preserve_order(EXPRESSION_OPTIONS)
 SHOT_FRAMING_OPTIONS[:] = _dedupe_preserve_order(SHOT_FRAMING_OPTIONS)
 ACTION_SEQUENCE_OPTIONS[:] = _dedupe_preserve_order(ACTION_SEQUENCE_OPTIONS)
-POLICY_FORBIDDEN_TERMS[:] = _dedupe_preserve_order(POLICY_FORBIDDEN_TERMS)
+# POLICY_FORBIDDEN_TERMS[:] = _dedupe_preserve_order(POLICY_FORBIDDEN_TERMS)
 
 # Main docstring and user guidance
 __doc__ = """
